@@ -13,7 +13,7 @@ class Window:
 
 	def __init__(self):
 		self.root = tkinter.Tk()
-		self.root.title('Cool Spotify Controller')
+		self.root.title('Arkhes')
 		self.root.protocol('WM_DELETE_WINDOW', self.close)
 
 		self.root.columnconfigure(0, weight=1)

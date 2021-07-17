@@ -121,7 +121,7 @@ class Player:
 			if not self.album_shuffle.get() and self.track_shuffle.get():
 				random.shuffle(uris)
 			uris = [uris]
-		elif SpotifyWrapper.is_cool_playlist(resource):
+		elif SpotifyWrapper.is_arkhes_playlist(resource):
 			path = Utils.path_for(resource[len(spotify_wrapper.prefix):].strip())
 			uris = self.get_uris_from_file(path)
 		elif SpotifyWrapper.is_song(resource):

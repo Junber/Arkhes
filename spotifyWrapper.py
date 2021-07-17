@@ -7,8 +7,8 @@ import math
 
 
 class SpotifyWrapper:
-	prefix = 'cool:'
-	resource_type = 'cool'
+	prefix = 'arkhes:'
+	resource_type = 'arkhes'
 
 	scope = 'user-library-read user-modify-playback-state user-read-playback-state user-library-modify'
 
@@ -102,7 +102,7 @@ class SpotifyWrapper:
 	def is_song(uri):
 		return uri.startswith('https://open.spotify.com/track/') or uri.startswith('spotify:track')
 
-	def is_cool_playlist(uri):
+	def is_arkhes_playlist(uri):
 		return uri.startswith(SpotifyWrapper.prefix)
 
 	def cache_uncached_albums(self, uris):
@@ -122,7 +122,7 @@ class SpotifyWrapper:
 			return self.get_album(uri)
 		elif SpotifyWrapper.is_song(uri):
 			return self.spotify.track(uri)  # TODO: Cache and stuff
-		elif SpotifyWrapper.is_cool_playlist(uri):
+		elif SpotifyWrapper.is_arkhes_playlist(uri):
 			return {'name' : uri[len(self.prefix):].strip(), 'type' : self.resource_type, 'uri' : uri}
 		else:
 			return []
