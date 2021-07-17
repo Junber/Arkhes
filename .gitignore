@@ -122,3 +122,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+.vscode/
+
+cover_cache/
+
+playlists/
+
+*.bat
+
+save.json
+
+cache.json
