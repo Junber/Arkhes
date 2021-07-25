@@ -8,6 +8,8 @@ from albumList import AlbumList
 from spotifyWrapper import spotify_wrapper
 from utils import Utils
 
+# TODO: Allow reordering playlists
+
 class Editor:
 	def __init__(self, root):
 		self.current_playlist_frame = CurrentPlaylistFrame(root, self)		
@@ -21,9 +23,11 @@ class Editor:
 		self.settings_frame.grid(column=0, row=3, rowspan=2, sticky=(S, W, E))
 		ttk.Button(self.settings_frame, text='Clear Cache', command=self.clear_cache).grid(column=0, row=0, sticky=(S, N, W, E))
 		ttk.Button(self.settings_frame, text='Update Saved Albums', command=self.update_saved_albums).grid(column=1, row=0, sticky=(S, N, W, E))
-		self.categorization_mode = tkinter.BooleanVar(value=True)
-		self.categorization_mode.trace_add('write', self.changed_categorization_mode)
-		ttk.Checkbutton(self.settings_frame, text='Categorization Mode', variable=self.categorization_mode).grid(column=0, columnspan=2, row=1, sticky=(S, N, W, E))
+		self.categorization_edit = tkinter.BooleanVar(value=True)
+		ttk.Checkbutton(self.settings_frame, text='Edit Categorizations', variable=self.categorization_edit).grid(column=0, columnspan=2, row=1, sticky=(S, N, W, E))
+		self.categorization_view = tkinter.BooleanVar(value=True)
+		self.categorization_view.trace_add('write', self.changed_categorization_view)
+		ttk.Checkbutton(self.settings_frame, text='Show uncategorized albums', variable=self.categorization_view).grid(column=0, columnspan=2, row=2, sticky=(S, N, W, E))
 
 		self.album_list = AlbumList(root, self, 'Contents', self.clicked_playlist_album, [["Copy", self.copy_album], ["X", self.remove_album_from_list]])
 		self.album_list.grid(column=1, row=0, rowspan=5, sticky=(N, W, E, S))
@@ -49,11 +53,12 @@ class Editor:
 		self.change_page(0)
 	
 	def save_dict(self):
-		return {'categorization_mode' : self.categorization_mode.get(), 'current' : self.current_playlist_frame.save_dict(),
+		return {'categorization_view' : self.categorization_view.get(), 'categorization_edit' : self.categorization_edit.get(), 'current' : self.current_playlist_frame.save_dict(),
 				'target' : self.get_target_name(), 'page' : self.page}
 	
 	def load_from(self, dct):
-		self.categorization_mode.set(dct['categorization_mode'])
+		self.categorization_view.set(dct['categorization_view'])
+		self.categorization_edit.set(dct['categorization_edit'])
 		self.current_playlist_frame.load_from(dct['current'])
 		self.set_target_name(dct['target'])
 		self.page = dct['page']
@@ -69,13 +74,13 @@ class Editor:
 		else:
 			self.prev_button.state(['!disabled'])
 		
-		if self.page >= spotify_wrapper.saved_album_pages(self.categorization_mode.get()) - 1:
-			self.page = spotify_wrapper.saved_album_pages(self.categorization_mode.get()) - 1
+		if self.page >= spotify_wrapper.saved_album_pages(self.categorization_view.get()) - 1:
+			self.page = spotify_wrapper.saved_album_pages(self.categorization_view.get()) - 1
 			self.next_button.state(['disabled'])
 		else:
 			self.next_button.state(['!disabled'])
 
-		self.saved_album_list.update_with_saved_albums(self.page, self.categorization_mode.get())
+		self.saved_album_list.update_with_saved_albums(self.page, self.categorization_view.get())
 		
 	def play(self, album):
 		spotify_wrapper.shuffle(False)
@@ -83,13 +88,13 @@ class Editor:
 	
 	def album_categorized(self, album):
 		self.name_changed()
-		if self.categorization_mode.get():
+		if self.categorization_edit.get():
 			spotify_wrapper.add_categorized_album(album)
 			self.change_page(0)
 	
 	def album_uncategorized(self, album):
 		self.name_changed()
-		if self.categorization_mode.get():
+		if self.categorization_edit.get():
 			spotify_wrapper.remove_categorized_album(album)
 			self.change_page(0)
 	
@@ -129,7 +134,7 @@ class Editor:
 		spotify_wrapper.reload_saved_album_cache()
 		self.change_page(0)
 
-	def changed_categorization_mode(self, *args):
+	def changed_categorization_view(self, *args):
 		self.change_page(0)
 
 
