@@ -58,13 +58,13 @@ class SpotifyWrapper:
 
 	def load_cache(self):
 		self.saved_albums_cache = []
-		self.album_cache = {}
+		self.resource_cache = {}
 
 		if Path(self.cache_file_name).is_file():
 			dct = None
 			with open(self.cache_file_name, 'r') as f:
 				dct = json.loads(f.readline())
-			self.album_cache = dct['album_cache']
+			self.resource_cache = dct['resource_cache']
 			self.saved_albums_cache = dct['saved_albums_cache']
 			self.set_uncategorized_albums()
 		else:
@@ -72,7 +72,7 @@ class SpotifyWrapper:
 	
 	def save_cache(self):
 		with open(self.cache_file_name, 'w') as f:
-			f.write(json.dumps({'album_cache' : self.album_cache, 'saved_albums_cache' : self.saved_albums_cache}))
+			f.write(json.dumps({'resource_cache' : self.resource_cache, 'saved_albums_cache' : self.saved_albums_cache}))
 	
 	def reload_saved_album_cache(self):
 		self.saved_albums_cache = []
@@ -80,7 +80,7 @@ class SpotifyWrapper:
 
 	def clear_cache(self):
 		self.reload_saved_album_cache()
-		self.album_cache = {}
+		self.resource_cache = {}
 
 
 	def get_device_id(self):
@@ -94,7 +94,19 @@ class SpotifyWrapper:
 		if len(uris) > 0:
 			new_albums = self.spotify.albums(uris)
 			for uri, album in zip(uris, new_albums['albums']):
-				self.album_cache[uri] = album
+				self.resource_cache[uri] = album
+
+	def cache_songs(self, uris):
+		if len(uris) > 0:
+			new_songs = self.spotify.tracks(uris)
+			for uri, song in zip(uris, new_songs['tracks']):
+				self.resource_cache[uri] = song
+
+	def cache_spotify_playlists(self, uris):
+		if len(uris) > 0:
+			for uri in uris:
+				playlist = self.spotify.playlist(uri)
+				self.resource_cache[uri] = playlist
 
 	def is_album(uri):
 		return uri.startswith('https://open.spotify.com/album/') or uri.startswith('spotify:album')
@@ -102,30 +114,32 @@ class SpotifyWrapper:
 	def is_song(uri):
 		return uri.startswith('https://open.spotify.com/track/') or uri.startswith('spotify:track')
 
+	def is_spotify_playlist(uri):
+		return uri.startswith('https://open.spotify.com/playlist/') or uri.startswith('spotify:playlist')
+
 	def is_arkhes_playlist(uri):
 		return uri.startswith(SpotifyWrapper.prefix)
 
 	def cache_uncached_albums(self, uris):
 		uncached = []
 		for uri in uris:
-			if SpotifyWrapper.is_album(uri) and not uri in self.album_cache:
+			if SpotifyWrapper.is_album(uri) and not uri in self.resource_cache:
 				uncached.append(uri)
 		self.cache_albums(uncached)
-
-	def get_album(self, uri):
-		if not uri in self.album_cache:
-			self.cache_albums([uri])
-		return self.album_cache[uri]
 	
 	def get_resource(self, uri):
-		if SpotifyWrapper.is_album(uri):
-			return self.get_album(uri)
-		elif SpotifyWrapper.is_song(uri):
-			return self.spotify.track(uri)  # TODO: Cache and stuff
-		elif SpotifyWrapper.is_arkhes_playlist(uri):
-			return {'name' : uri[len(self.prefix):].strip(), 'type' : self.resource_type, 'uri' : uri}
-		else:
-			return []
+		if not uri in self.resource_cache:
+			if SpotifyWrapper.is_album(uri):
+				return self.cache_albums([uri])
+			elif SpotifyWrapper.is_song(uri):
+				return self.cache_songs([uri])
+			elif SpotifyWrapper.is_spotify_playlist(uri):
+				return self.cache_spotify_playlists([uri])
+			elif SpotifyWrapper.is_arkhes_playlist(uri):
+				return {'name' : uri[len(self.prefix):].strip(), 'type' : self.resource_type, 'uri' : uri}
+			else:
+				return []
+		return self.resource_cache[uri]
 	
 	def play_uris(self, uris):
 		self.spotify.start_playback(device_id=self.get_device_id(), uris=uris)
@@ -158,16 +172,16 @@ class SpotifyWrapper:
 		self.spotify.shuffle(shouldShuffle, device_id=self.get_device_id())
 	
 	def play(self, uri):
-		if SpotifyWrapper.is_album(uri):
+		if SpotifyWrapper.is_album(uri) or SpotifyWrapper.is_spotify_playlist(uri):
 			self.spotify.start_playback(context_uri=uri, device_id=self.get_device_id())
 		else:
-			self.spotify.start_playback(uris=[uri], device_id=self.get_device_id())
+			self.play_uris([uri])
 	
 	def set_volume(self, volume):
-		self.spotify.volume(volume, device_id=self.get_device_id())
+		self.spotify.volume(int(volume), device_id=self.get_device_id())
 	
 	def set_track_progress(self, progress):
-		self.spotify.seek_track(progress, device_id=self.get_device_id())
+		self.spotify.seek_track(int(progress), device_id=self.get_device_id())
 	
 	def remove_saved_album(self, uri):
 		self.spotify.current_user_saved_albums_delete([uri])

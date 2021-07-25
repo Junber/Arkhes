@@ -20,8 +20,9 @@ class Window:
 		self.root.rowconfigure(0, weight=1)
 
 		style = ttk.Style()
-		style.configure('album.TButton', background='green')
-		style.configure(spotify_wrapper.resource_type + '.TButton', background='blue')
+		style.configure('album.TButton', foreground='green')
+		style.configure('playlist.TButton', foreground='red')
+		style.configure(spotify_wrapper.resource_type + '.TButton', foreground='blue')
 
 		notebook = ttk.Notebook(self.root)
 		frame1 = ttk.Frame(notebook)

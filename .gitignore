@@ -134,3 +134,5 @@ playlists/
 save.json
 
 cache.json
+
+*.sh

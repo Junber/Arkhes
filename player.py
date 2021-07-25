@@ -93,7 +93,7 @@ class Player:
 	def build_volume_frame(self):
 		self.volume_frame = ttk.Frame(self.playback_frame)
 		ttk.Label(self.volume_frame, text='Volume').grid(column=0, row=0, sticky=(N, S, W, E))
-		self.volume = tkinter.DoubleVar()
+		self.volume = tkinter.IntVar()
 		ttk.Scale(self.volume_frame, orient=HORIZONTAL, variable=self.volume, to=100, command=self.changed_volume).grid(column=1, row=0, sticky=(N, S, W, E))
 	
 	def save_dict(self):
@@ -115,9 +115,8 @@ class Player:
 	def get_uris(self, resource):
 		uris = []
 		if SpotifyWrapper.is_album(resource):
-			tracks = spotify_wrapper.get_album(resource)['tracks']
-			for track in tracks['items']:
-				uris.append(track['uri'])
+			tracks = spotify_wrapper.get_resource(resource)['tracks']['items']
+			uris = [track['uri'] for track in tracks]
 			if not self.album_shuffle.get() and self.track_shuffle.get():
 				random.shuffle(uris)
 			uris = [uris]
@@ -126,6 +125,12 @@ class Player:
 			uris = self.get_uris_from_file(path)
 		elif SpotifyWrapper.is_song(resource):
 			uris = [[resource]]
+		elif SpotifyWrapper.is_spotify_playlist(resource):
+			tracks = spotify_wrapper.get_resource(resource)['tracks']['items']
+			uris = [item['track']['uri'] for item in tracks]
+			if not self.album_shuffle.get() and self.track_shuffle.get():
+				random.shuffle(uris)
+			uris = [uris]
 		
 		return uris
 	
@@ -185,6 +190,7 @@ class Player:
 		spotify_wrapper.set_track_progress(self.current_track_progress.get())
 	
 	def update_current_track(self):
+		# TODO: Only do all of that when focused (/visible?)
 		playback = spotify_wrapper.spotify.current_playback()
 		if playback is not None and playback['item'] is not None:
 			self.current_track_progress.set(playback['progress_ms']) # TODO: Make smoother
@@ -221,4 +227,9 @@ class Player:
 	
 	def pause(self, *args):
 		spotify_wrapper.toggle_pause()
+
+
+	# TODO: Handle large playbacks
+	# TODO: Save playback context to play something else but resume later
+	# TODO: Look at songs inside of albums/spotify playlists
 
