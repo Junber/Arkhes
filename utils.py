@@ -14,6 +14,29 @@ class Utils:
 				f.write('\n')
 			f.write(line)
 	
+	def remove_line_down(filename, line_number_to_move):
+		with open(filename, 'r+') as f:
+			d = [line.strip('\n') for line in f]
+			f.seek(0)
+			f.truncate()
+			line_number = 0
+			saved_line = ""
+			for line in d:
+				if line_number == line_number_to_move:
+					saved_line = line
+				elif line_number == line_number_to_move + 1:
+					if f.tell() != 0:
+						f.write('\n')
+					f.write(line)
+					f.write('\n')
+					f.write(saved_line)
+				else:
+					if f.tell() != 0:
+						f.write('\n')
+					f.write(line)
+
+				line_number += 1
+	
 	def remove_line_from_file(filename, line_number_to_remove):
 		with open(filename, 'r+') as f:
 			d = [line.strip('\n') for line in f]

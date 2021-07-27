@@ -8,8 +8,6 @@ from albumList import AlbumList
 from spotifyWrapper import spotify_wrapper
 from utils import Utils
 
-# TODO: Allow reordering playlists
-
 class Editor:
 	def __init__(self, root):
 		self.current_playlist_frame = CurrentPlaylistFrame(root, self)		
@@ -29,7 +27,11 @@ class Editor:
 		self.categorization_view.trace_add('write', self.changed_categorization_view)
 		ttk.Checkbutton(self.settings_frame, text='Show uncategorized albums', variable=self.categorization_view).grid(column=0, columnspan=2, row=2, sticky=(S, N, W, E))
 
-		self.album_list = AlbumList(root, self, 'Contents', self.clicked_playlist_album, [["Copy", self.copy_album], ["X", self.remove_album_from_list]])
+		self.album_list = AlbumList(root, self, 'Contents', self.clicked_playlist_album,
+			[["Copy", self.copy_album],
+			["↑", self.move_album_up, lambda album, _: album['lineNumber'] > 0],
+			["↓", self.move_album_down, lambda album, albumNum: album['lineNumber'] < albumNum-1],
+			["X", self.remove_album_from_list]])
 		self.album_list.grid(column=1, row=0, rowspan=5, sticky=(N, W, E, S))
 
 		self.saved_album_list = AlbumList(root, self, 'Saved Albums', self.play, [["Add", self.clicked_saved_album], ["X", self.remove_saved_album]])
@@ -111,6 +113,14 @@ class Editor:
 	def copy_album(self, album):
 		Utils.add_line_to_file(self.get_target_path(), album['uri'])
 		self.album_categorized(album)
+	
+	def move_album_up(self, album):
+		Utils.remove_line_down(self.get_current_path(), album['lineNumber'] - 1)
+		self.name_changed()
+	
+	def move_album_down(self, album):
+		Utils.remove_line_down(self.get_current_path(), album['lineNumber'])
+		self.name_changed()
 
 	def clicked_saved_album(self, album):
 		Utils.add_line_to_file(self.get_current_path(), album['uri'])

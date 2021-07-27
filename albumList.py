@@ -23,7 +23,7 @@ class AlbumList:
 	def resource_type(self):
 		return spotify_wrapper.resource_type
 	
-	def get_albums(self, i, resource):
+	def get_album(self, i, resource):
 		album = spotify_wrapper.get_resource(resource)
 		
 		album['playlistLine'] = resource
@@ -34,25 +34,27 @@ class AlbumList:
 		lines = Utils.get_lines_from_file(filename)
 		
 		spotify_wrapper.cache_uncached_albums(lines)
-		uris = [self.get_albums(i, line) for i, line in enumerate(lines)]
+		uris = [self.get_album(i, line) for i, line in enumerate(lines)]
 
 		return uris
 	
-	def add_button(self, i, album):
+	def add_button(self, i, album, albumNum):
 		button = ttk.Button(self.albums_frame, text=album['name'], style=album['type']+'.TButton')
 		button.configure(command = lambda album=album: self.album_clicked_callback(album))
 		button.grid(column = 0, row = i, sticky = (W, E))
 		button.grid_configure(padx=1, pady=1)
 
 		for extraButtonIndex, extra in enumerate(self.extra_callbacks):
-			extraButton = ttk.Button(self.albums_frame, text=extra[0], style=album['type']+'.TButton')
+			extraButton = ttk.Button(self.albums_frame, text=extra[0], style=album['type']+'.TButton', width=len(extra[0]) + 2)
 			extraButton.configure(command = (lambda callback : lambda album=album: callback(album))(extra[1]))
 			extraButton.grid(column = extraButtonIndex + 1, row = i, sticky = (W, E))
 			extraButton.grid_configure(padx=1, pady=1)
+			if len(extra) > 2 and not extra[2](album, albumNum):
+				extraButton.state(['disabled'])
 	
 	def add_buttons(self, albums):
 		for i, album in enumerate(albums):
-			self.add_button(i, album)
+			self.add_button(i, album, len(albums))
 	
 	def update(self, path):
 		for child in self.albums_frame.winfo_children(): 
