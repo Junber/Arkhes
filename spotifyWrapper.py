@@ -84,6 +84,7 @@ class SpotifyWrapper:
 
 
 	def get_device_id(self):
+		# TODO: Cache and only update occasionally
 		devices = self.spotify.devices()['devices']
 		for device in devices:
 			if device['is_active']:
@@ -142,6 +143,8 @@ class SpotifyWrapper:
 		return self.resource_cache[uri]
 	
 	def play_uris(self, uris):
+		if len(uris) > 750:
+			uris = uris[:750] # Prevent "Request Entity Too Large"
 		self.spotify.start_playback(device_id=self.get_device_id(), uris=uris)
 	
 	def go_back_track(self):

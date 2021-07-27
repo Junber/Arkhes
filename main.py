@@ -16,6 +16,8 @@ class Window:
 		self.root.title('Arkhes')
 		self.root.protocol('WM_DELETE_WINDOW', self.close)
 
+		self.focused = True
+
 		self.root.columnconfigure(0, weight=1)
 		self.root.rowconfigure(0, weight=1)
 
@@ -24,17 +26,19 @@ class Window:
 		style.configure('playlist.TButton', foreground='red')
 		style.configure(spotify_wrapper.resource_type + '.TButton', foreground='blue')
 
-		notebook = ttk.Notebook(self.root)
-		frame1 = ttk.Frame(notebook)
-		frame2 = ttk.Frame(notebook)
-		notebook.add(frame1, text='Play')
-		notebook.add(frame2, text='Edit')
-		notebook.grid(column=0, row=0, sticky=(N, W, E, S))
+		self.notebook = ttk.Notebook(self.root)
+		frame1 = ttk.Frame(self.notebook)
+		frame2 = ttk.Frame(self.notebook)
+		self.notebook.add(frame1, text='Play')
+		self.notebook.add(frame2, text='Edit')
+		self.notebook.grid(column=0, row=0, sticky=(N, W, E, S))
 
 		self.player = Player(self.add_mainframe(frame1))
 		self.editor = Editor(self.add_mainframe(frame2))
 		
-		notebook.bind('<<NotebookTabChanged>>', self.tab_changed)
+		self.notebook.bind('<<NotebookTabChanged>>', self.tab_changed)
+		self.root.bind('<FocusIn>', lambda _: self.focus_changed(True))
+		self.root.bind('<FocusOut>', lambda _: self.focus_changed(False))
 
 		self.load()
 		self.root.mainloop()
@@ -59,9 +63,17 @@ class Window:
 		with open(self.save_file_name, 'w') as f:
 			f.write(save_string)
 	
+	def set_player_active_flag(self):
+		self.player.set_active(self.focused and (self.notebook.index("current") == 0))
+	
 	def tab_changed(self, event):
 		self.player.name_changed()
 		self.editor.name_changed()
+		self.set_player_active_flag()
+	
+	def focus_changed(self, new_focus):
+		self.focused = new_focus
+		self.set_player_active_flag()
 	
 	def add_mainframe(self, root):
 		mainframe = ttk.Frame(root, padding='3 3 12 12')

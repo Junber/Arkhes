@@ -13,6 +13,7 @@ from currentPlaylistFrame import CurrentPlaylistFrame
 class Player:
 	def __init__(self, root):
 		self.root = root
+		self.active = True
 
 		self.current_playlist_frame = CurrentPlaylistFrame(root, self)
 		self.current_playlist_frame.grid(column=0, row=0, sticky=(N, W, E))
@@ -190,7 +191,9 @@ class Player:
 		spotify_wrapper.set_track_progress(self.current_track_progress.get())
 	
 	def update_current_track(self):
-		# TODO: Only do all of that when focused (/visible?)
+		if not self.active:
+			return
+
 		playback = spotify_wrapper.spotify.current_playback()
 		if playback is not None and playback['item'] is not None:
 			self.current_track_progress.set(playback['progress_ms']) # TODO: Make smoother
@@ -227,9 +230,16 @@ class Player:
 	
 	def pause(self, *args):
 		spotify_wrapper.toggle_pause()
+	
+	def set_active(self, new_active):
+		if not self.active and new_active:
+			self.update_current_track()
+		self.active = new_active
 
 
-	# TODO: Handle large playbacks
+	# TODO: Handle large playbacks better
 	# TODO: Save playback context to play something else but resume later
 	# TODO: Look at songs inside of albums/spotify playlists
+	# TODO: Repeat modes
+	# TODO: Retain order when album shuffle flag for playlists
 
