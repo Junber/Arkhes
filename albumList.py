@@ -6,14 +6,16 @@ from pathlib import Path
 
 class AlbumList:
 	def __init__(self, parent, owner, name, album_clicked_callback, extra_callbacks=[]) -> None:
-		self.albums_frame = ttk.Labelframe(parent, text=name, padding='4 5 4 5')
 		self.album_clicked_callback = album_clicked_callback
 		self.extra_callbacks = extra_callbacks
-
-		self.albums_frame.columnconfigure(0, weight=1)
-		
 		self.owner = owner
+
+		self.build_frame(parent, name)
 	
+	def build_frame(self, parent, name):
+		self.albums_frame = ttk.Labelframe(parent, text=name, padding='4 5 4 5')
+		self.albums_frame.columnconfigure(0, weight=1)
+
 	def grid(self, **args):
 		self.albums_frame.grid(args)
 	
@@ -56,15 +58,19 @@ class AlbumList:
 		for i, album in enumerate(albums):
 			self.add_button(i, album, len(albums))
 	
-	def update(self, path):
-		for child in self.albums_frame.winfo_children(): 
+	def destory_old_buttons(self):
+		for child in self.old_buttons:
 			child.destroy()
-
+	
+	def clear_buttons(self):
+		self.old_buttons = self.albums_frame.winfo_children()
+		self.albums_frame.after(20, self.destory_old_buttons) # Doing this with a delay reduces flickering somewhat
+	
+	def update(self, path):
+		self.clear_buttons()
 		if Path(path).is_file():
 			self.add_buttons(self.get_albums_from_file(path))
 	
 	def update_with_saved_albums(self, page, categorization_mode):
-		for child in self.albums_frame.winfo_children(): 
-			child.destroy()
-
+		self.clear_buttons()
 		self.add_buttons(spotify_wrapper.saved_albums(page, categorization_mode))
