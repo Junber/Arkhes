@@ -4,6 +4,7 @@ from tkinter import N, W, S, E, ttk, messagebox
 from currentPlaylistFrame import CurrentPlaylistFrame
 from targetPlaylistFrame import TargetPlaylistFrame
 from uriFrame import UriFrame
+from addCurrentPlaybackFrame import AddCurrentPlaybackFrame
 from albumList import AlbumList
 from spotifyWrapper import spotify_wrapper
 from utils import Utils
@@ -16,13 +17,15 @@ class Editor:
 		self.target_playlist_frame.grid(column=0, row=1, sticky=(N, W, E))
 		self.uri_frame = UriFrame(root, self)
 		self.uri_frame.grid(column=0, row=2, sticky=(N, W, E))
+		self.uri_frame = AddCurrentPlaybackFrame(root, self)
+		self.uri_frame.grid(column=0, row=3, sticky=(N, W, E))
 		
 		self.settings_frame = ttk.Labelframe(root, text='Settings', padding='5 5 5 5')
-		self.settings_frame.grid(column=0, row=3, rowspan=2, sticky=(S, W, E))
+		self.settings_frame.grid(column=0, row=4, rowspan=2, sticky=(S, W, E))
 		ttk.Button(self.settings_frame, text='Clear Cache', command=self.clear_cache).grid(column=0, row=0, sticky=(S, N, W, E))
 		ttk.Button(self.settings_frame, text='Update Saved Albums', command=self.update_saved_albums).grid(column=1, row=0, sticky=(S, N, W, E))
 		self.categorization_edit = tkinter.BooleanVar(value=True)
-		ttk.Checkbutton(self.settings_frame, text='Edit Categorizations', variable=self.categorization_edit).grid(column=0, columnspan=2, row=1, sticky=(S, N, W, E))
+		ttk.Checkbutton(self.settings_frame, text='Edit categorization state', variable=self.categorization_edit).grid(column=0, columnspan=2, row=1, sticky=(S, N, W, E))
 		self.categorization_view = tkinter.BooleanVar(value=True)
 		self.categorization_view.trace_add('write', self.changed_categorization_view)
 		ttk.Checkbutton(self.settings_frame, text='Show uncategorized albums', variable=self.categorization_view).grid(column=0, columnspan=2, row=2, sticky=(S, N, W, E))
@@ -32,24 +35,33 @@ class Editor:
 			["↑", self.move_album_up, lambda album, _: album['lineNumber'] > 0],
 			["↓", self.move_album_down, lambda album, albumNum: album['lineNumber'] < albumNum-1],
 			["X", self.remove_album_from_list]])
-		self.album_list.grid(column=1, row=0, rowspan=5, sticky=(N, W, E, S))
+		self.album_list.grid(column=1, row=0, rowspan=6, sticky=(N, W, E, S))
 
-		self.saved_album_list = AlbumList(root, self, 'Saved Albums', self.play, [["Add", self.clicked_saved_album], ["X", self.remove_saved_album]])
-		self.saved_album_list.grid(column=2, row=0, rowspan=4, columnspan=2, sticky=(N, W, E, S))
+		self.saved_album_list = AlbumList(root, self, 'Saved Albums', self.play, [["Add", self.add_album], ["X", self.remove_saved_album]])
+		self.saved_album_list.grid(column=2, row=0, rowspan=5, columnspan=3, sticky=(N, W, E, S))
 
 		self.page = 0
 		self.prev_button = ttk.Button(root, text='Prev', command=lambda: self.change_page(-1))
-		self.prev_button.grid(column=2, row=4, sticky=(N, W, E))
+		self.prev_button.grid(column=2, row=5, sticky=(N, S, W, E))
+		self.page_string = tkinter.StringVar()
+		self.page_label = ttk.Label(root, textvariable=self.page_string, anchor='center')
+		self.page_label.grid(column=3, row=5, sticky=(N, S, W, E))
 		self.next_button = ttk.Button(root, text='Next', command=lambda: self.change_page(+1))
-		self.next_button.grid(column=3, row=4, sticky=(N, W, E))
+		self.next_button.grid(column=4, row=5, sticky=(N, S, W, E))
 
 		for child in root.winfo_children(): 
 			child.grid_configure(padx=5, pady=5)
 		
 		root.columnconfigure(0, weight=1)
 		root.columnconfigure(1, weight=2, minsize=500)
-		root.columnconfigure(2, weight=2, minsize=250)
-		root.columnconfigure(3, weight=2, minsize=250)
+		root.columnconfigure(2, weight=2, minsize=500/3)
+		root.columnconfigure(3, weight=2, minsize=500/3)
+		root.columnconfigure(4, weight=2, minsize=500/3)
+		root.rowconfigure(0, weight=1)
+		root.rowconfigure(1, weight=1)
+		root.rowconfigure(2, weight=1)
+		root.rowconfigure(3, weight=1)
+		root.rowconfigure(4, weight=1)
 
 		self.name_changed()
 		self.change_page(0)
@@ -71,16 +83,21 @@ class Editor:
 	def change_page(self, diff):
 		self.page += diff
 
-		if self.page == 0:
+		maxPage = spotify_wrapper.saved_album_pages(self.categorization_view.get()) - 1
+
+		if self.page <= 0:
+			self.page = 0
 			self.prev_button.state(['disabled'])
 		else:
 			self.prev_button.state(['!disabled'])
 		
-		if self.page >= spotify_wrapper.saved_album_pages(self.categorization_view.get()) - 1:
-			self.page = spotify_wrapper.saved_album_pages(self.categorization_view.get()) - 1
+		if self.page >= maxPage:
+			self.page = maxPage
 			self.next_button.state(['disabled'])
 		else:
 			self.next_button.state(['!disabled'])
+
+		self.page_string.set(str(self.page + 1) + " / " + str(maxPage + 1))
 
 		self.saved_album_list.update_with_saved_albums(self.page, self.categorization_view.get())
 		
@@ -88,10 +105,10 @@ class Editor:
 		spotify_wrapper.shuffle(False)
 		spotify_wrapper.play(album['uri'])
 	
-	def album_categorized(self, album):
+	def album_categorized(self, uri):
 		self.name_changed()
 		if self.categorization_edit.get():
-			spotify_wrapper.add_categorized_album(album)
+			spotify_wrapper.add_categorized_album(uri)
 			self.change_page(0)
 	
 	def album_uncategorized(self, album):
@@ -121,10 +138,13 @@ class Editor:
 	def move_album_down(self, album):
 		Utils.remove_line_down(self.get_current_path(), album['lineNumber'])
 		self.name_changed()
+	
+	def add_uri(self, uri):
+		Utils.add_line_to_file(self.get_current_path(), uri)
+		self.album_categorized(uri)
 
-	def clicked_saved_album(self, album):
-		Utils.add_line_to_file(self.get_current_path(), album['uri'])
-		self.album_categorized(album)
+	def add_album(self, album):
+		self.add_uri(album['uri'])
 
 	def clicked_playlist_album(self, album):
 		if album['type'] == spotify_wrapper.resource_type:

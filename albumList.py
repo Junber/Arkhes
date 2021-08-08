@@ -5,25 +5,19 @@ from tkinter import N, W, S, E, ttk
 from pathlib import Path
 
 class AlbumList:
-	def __init__(self, parent, owner, name, album_clicked_callback, extra_callbacks=[]) -> None:
+	def __init__(self, parent, owner, title, album_clicked_callback, extra_callbacks=[]) -> None:
 		self.album_clicked_callback = album_clicked_callback
 		self.extra_callbacks = extra_callbacks
 		self.owner = owner
 
-		self.build_frame(parent, name)
+		self.build_frame(parent, title)
 	
-	def build_frame(self, parent, name):
-		self.albums_frame = ttk.Labelframe(parent, text=name, padding='4 5 4 5')
+	def build_frame(self, parent, title):
+		self.albums_frame = ttk.Labelframe(parent, text=title, padding='4 5 4 5')
 		self.albums_frame.columnconfigure(0, weight=1)
 
 	def grid(self, **args):
 		self.albums_frame.grid(args)
-	
-	def prefix(self):
-		return spotify_wrapper.prefix
-
-	def resource_type(self):
-		return spotify_wrapper.resource_type
 	
 	def get_album(self, i, resource):
 		album = spotify_wrapper.get_resource(resource)

@@ -23,12 +23,12 @@ class SpotifyWrapper:
 		self.categorizations = {}
 		self.load_cache()
 	
-	def add_categorized_album(self, album):
-		if album['uri'] not in self.categorizations:
-			self.categorizations[album['uri']] = 1
+	def add_categorized_album(self, uri):
+		if uri not in self.categorizations:
+			self.categorizations[uri] = 1
 			self.set_uncategorized_albums()
 		else:
-			self.categorizations[album['uri']] += 1
+			self.categorizations[uri] += 1
 	
 	def remove_categorized_album(self, album):
 		if album['type'] == 'album' and album['uri'] in self.categorizations:
@@ -131,11 +131,11 @@ class SpotifyWrapper:
 	def get_resource(self, uri):
 		if not uri in self.resource_cache:
 			if SpotifyWrapper.is_album(uri):
-				return self.cache_albums([uri])
+				self.cache_albums([uri])
 			elif SpotifyWrapper.is_song(uri):
-				return self.cache_songs([uri])
+				self.cache_songs([uri])
 			elif SpotifyWrapper.is_spotify_playlist(uri):
-				return self.cache_spotify_playlists([uri])
+				self.cache_spotify_playlists([uri])
 			elif SpotifyWrapper.is_arkhes_playlist(uri):
 				return {'name' : uri[len(self.prefix):].strip(), 'type' : self.resource_type, 'uri' : uri}
 			else:
@@ -190,6 +190,9 @@ class SpotifyWrapper:
 		self.spotify.current_user_saved_albums_delete([uri])
 		self.saved_albums_cache = [i for i in self.saved_albums_cache if i['uri'] != uri]
 		self.uncategorized_albums = [i for i in self.uncategorized_albums if i['uri'] != uri]
+	
+	def get_current_playback(self):
+		return self.spotify.current_playback()
 	
 	# TODO: Spotify playlists as list items
 	# TODO: Synching with normal spotify playlist

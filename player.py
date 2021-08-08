@@ -194,7 +194,7 @@ class Player:
 		if not self.active:
 			return
 
-		playback = spotify_wrapper.spotify.current_playback()
+		playback = spotify_wrapper.get_current_playback()
 		if playback is not None and playback['item'] is not None:
 			self.current_track_progress.set(playback['progress_ms']) # TODO: Make smoother
 			self.volume.set(playback['device']['volume_percent'])
@@ -242,4 +242,5 @@ class Player:
 	# TODO: Look at songs inside of albums/spotify playlists
 	# TODO: Repeat modes
 	# TODO: Retain order when album shuffle flag for playlists
+	# TODO: Album/playlist covers
 

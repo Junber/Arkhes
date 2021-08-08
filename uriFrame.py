@@ -23,5 +23,4 @@ class UriFrame:
 		if len(object) == 0:
 			messagebox.showinfo(message='Invalid URI')
 			return
-		Utils.add_line_to_file(self.editor.get_current_path(), object['uri'])		
-		self.editor.name_changed()
+		self.editor.add_uri(object['uri'])
