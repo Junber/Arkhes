@@ -11,17 +11,20 @@ from utils import Utils
 
 class Editor:
 	def __init__(self, root):
-		self.current_playlist_frame = CurrentPlaylistFrame(root, self)		
+		self.left_frame = ttk.Frame(root)
+		self.left_frame.grid(column=0, row=0, rowspan=2, sticky=(N, S, W, E))
+
+		self.current_playlist_frame = CurrentPlaylistFrame(self.left_frame, self)		
 		self.current_playlist_frame.grid(column=0, row=0, sticky=(N, W, E))
-		self.target_playlist_frame = TargetPlaylistFrame(root, self)
-		self.target_playlist_frame.grid(column=0, row=1, sticky=(N, W, E))
-		self.uri_frame = UriFrame(root, self)
-		self.uri_frame.grid(column=0, row=2, sticky=(N, W, E))
-		self.uri_frame = AddCurrentPlaybackFrame(root, self)
-		self.uri_frame.grid(column=0, row=3, sticky=(N, W, E))
+		self.target_playlist_frame = TargetPlaylistFrame(self.left_frame, self)
+		self.target_playlist_frame.grid(column=0, row=1, sticky=(W, E))
+		self.uri_frame = UriFrame(self.left_frame, self)
+		self.uri_frame.grid(column=0, row=2, sticky=(W, E))
+		self.uri_frame = AddCurrentPlaybackFrame(self.left_frame, self)
+		self.uri_frame.grid(column=0, row=3, sticky=(W, E))
 		
-		self.settings_frame = ttk.Labelframe(root, text='Settings', padding='5 5 5 5')
-		self.settings_frame.grid(column=0, row=4, rowspan=2, sticky=(S, W, E))
+		self.settings_frame = ttk.Labelframe(self.left_frame, text='Settings', padding='5 5 5 5')
+		self.settings_frame.grid(column=0, row=4, sticky=(S, W, E))
 		ttk.Button(self.settings_frame, text='Clear Cache', command=self.clear_cache).grid(column=0, row=0, sticky=(S, N, W, E))
 		ttk.Button(self.settings_frame, text='Update Saved Albums', command=self.update_saved_albums).grid(column=1, row=0, sticky=(S, N, W, E))
 		self.categorization_edit = tkinter.BooleanVar(value=True)
@@ -35,19 +38,10 @@ class Editor:
 			["↑", self.move_album_up, lambda album, _: album['lineNumber'] > 0],
 			["↓", self.move_album_down, lambda album, albumNum: album['lineNumber'] < albumNum-1],
 			["X", self.remove_album_from_list]])
-		self.album_list.grid(column=1, row=0, rowspan=6, sticky=(N, W, E, S))
+		self.album_list.grid(column=1, row=0, rowspan=2, sticky=(N, W, E, S))
 
 		self.saved_album_list = AlbumList(root, self, 'Saved Albums', self.play, [["Add", self.add_album], ["X", self.remove_saved_album]])
-		self.saved_album_list.grid(column=2, row=0, rowspan=5, columnspan=3, sticky=(N, W, E, S))
-
-		self.page = 0
-		self.prev_button = ttk.Button(root, text='Prev', command=lambda: self.change_page(-1))
-		self.prev_button.grid(column=2, row=5, sticky=(N, S, W, E))
-		self.page_string = tkinter.StringVar()
-		self.page_label = ttk.Label(root, textvariable=self.page_string, anchor='center')
-		self.page_label.grid(column=3, row=5, sticky=(N, S, W, E))
-		self.next_button = ttk.Button(root, text='Next', command=lambda: self.change_page(+1))
-		self.next_button.grid(column=4, row=5, sticky=(N, S, W, E))
+		self.saved_album_list.grid(column=2, row=0, columnspan=3, sticky=(N, W, E, S))
 
 		for child in root.winfo_children(): 
 			child.grid_configure(padx=5, pady=5)
@@ -58,48 +52,32 @@ class Editor:
 		root.columnconfigure(3, weight=2, minsize=500/3)
 		root.columnconfigure(4, weight=2, minsize=500/3)
 		root.rowconfigure(0, weight=1)
-		root.rowconfigure(1, weight=1)
-		root.rowconfigure(2, weight=1)
-		root.rowconfigure(3, weight=1)
-		root.rowconfigure(4, weight=1)
+
+		self.left_frame.rowconfigure(0, weight=2)
+		self.left_frame.rowconfigure(1, weight=3)
+		self.left_frame.rowconfigure(2, weight=3)
+		self.left_frame.rowconfigure(3, weight=3)
+		self.left_frame.rowconfigure(4, weight=2)
 
 		self.name_changed()
-		self.change_page(0)
+		self.update_saved_album_list()
 	
 	def save_dict(self):
 		return {'categorization_view' : self.categorization_view.get(), 'categorization_edit' : self.categorization_edit.get(), 'current' : self.current_playlist_frame.save_dict(),
-				'target' : self.get_target_name(), 'page' : self.page}
+				'target' : self.get_target_name(), 'page' : self.saved_album_list.page}
 	
 	def load_from(self, dct):
 		self.categorization_view.set(dct['categorization_view'])
 		self.categorization_edit.set(dct['categorization_edit'])
 		self.current_playlist_frame.load_from(dct['current'])
 		self.set_target_name(dct['target'])
-		self.page = dct['page']
+		self.saved_album_list.page = dct['page']
 		
 		self.name_changed()
-		self.change_page(0)
+		self.saved_album_list.set_items_with_saved_albums(self.categorization_view.get())
 	
-	def change_page(self, diff):
-		self.page += diff
-
-		maxPage = spotify_wrapper.saved_album_pages(self.categorization_view.get()) - 1
-
-		if self.page <= 0:
-			self.page = 0
-			self.prev_button.state(['disabled'])
-		else:
-			self.prev_button.state(['!disabled'])
-		
-		if self.page >= maxPage:
-			self.page = maxPage
-			self.next_button.state(['disabled'])
-		else:
-			self.next_button.state(['!disabled'])
-
-		self.page_string.set(str(self.page + 1) + " / " + str(maxPage + 1))
-
-		self.saved_album_list.update_with_saved_albums(self.page, self.categorization_view.get())
+	def update_saved_album_list(self):
+		self.saved_album_list.set_items_with_saved_albums(self.categorization_view.get())
 		
 	def play(self, album):
 		spotify_wrapper.shuffle(False)
@@ -109,13 +87,13 @@ class Editor:
 		self.name_changed()
 		if self.categorization_edit.get():
 			spotify_wrapper.add_categorized_album(uri)
-			self.change_page(0)
+			self.update_saved_album_list()
 	
 	def album_uncategorized(self, album):
 		self.name_changed()
 		if self.categorization_edit.get():
 			spotify_wrapper.remove_categorized_album(album)
-			self.change_page(0)
+			self.update_saved_album_list()
 	
 	def remove_album_from_list(self, album):
 		Utils.remove_line_from_file(self.get_current_path(), album['lineNumber'])
@@ -125,7 +103,7 @@ class Editor:
 		result = messagebox.askyesno('Delete', 'Do you really want to remove this from your saved albums on Spotify?')
 		if result:
 			spotify_wrapper.remove_saved_album(album['uri'])
-			self.change_page(0)
+			self.update_saved_album_list()
 
 	def copy_album(self, album):
 		Utils.add_line_to_file(self.get_target_path(), album['uri'])
@@ -154,18 +132,18 @@ class Editor:
 			self.play(album)
 
 	def name_changed(self):
-		self.album_list.update(self.get_current_path())
+		self.album_list.set_items_with_path(self.get_current_path())
 
 	def clear_cache(self):
 		spotify_wrapper.clear_cache()
-		self.change_page(0)
+		self.update_saved_album_list()
 	
 	def update_saved_albums(self):
 		spotify_wrapper.reload_saved_album_cache()
-		self.change_page(0)
+		self.update_saved_album_list()
 
 	def changed_categorization_view(self, *args):
-		self.change_page(0)
+		self.update_saved_album_list()
 
 
 	def get_current_path(self):

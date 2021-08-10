@@ -84,7 +84,7 @@ class SpotifyWrapper:
 
 
 	def get_device_id(self):
-		# TODO: Cache and only update occasionally
+		# TODO: Cache and only update occasionally; Handle better in general (= let user choose device)
 		devices = self.spotify.devices()['devices']
 		for device in devices:
 			if device['is_active']:
@@ -159,11 +159,11 @@ class SpotifyWrapper:
 		else:
 			self.spotify.start_playback(device_id=self.get_device_id())
 	
-	def saved_albums(self, page, categorization_mode):
+	def saved_albums(self, categorization_mode):
 		if categorization_mode:
-			return self.uncategorized_albums[self.SAVED_ALBUM_PAGE_LIMIT*page : self.SAVED_ALBUM_PAGE_LIMIT*(page+1)]
+			return self.uncategorized_albums
 		else:
-			return self.saved_albums_cache[self.SAVED_ALBUM_PAGE_LIMIT*page : self.SAVED_ALBUM_PAGE_LIMIT*(page+1)]
+			return self.saved_albums_cache
 	
 	def saved_album_pages(self, categorization_mode):
 		if categorization_mode:

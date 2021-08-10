@@ -1,4 +1,4 @@
-import random, requests
+import random, requests, datetime
 
 from tkinter import N, W, S, E, ttk, HORIZONTAL
 import tkinter
@@ -48,15 +48,22 @@ class Player:
 		self.build_playback_button_frame()
 		self.playback_button_frame.grid(column=1, row=3, sticky=(S, W, E))
 
+		self.current_track_progress_frame = tkinter.Frame(self.playback_frame)
+		self.current_track_progress_frame.grid(column=1, row=4, sticky=(S, W, E))
 		self.current_track_progress = tkinter.IntVar(value=0)
-		self.current_track_progress_scale = ttk.Scale(self.playback_frame, orient=HORIZONTAL, variable=self.current_track_progress, command=self.changed_track_progress)
-		self.current_track_progress_scale.grid(column=1, row=4, sticky=(S, W, E))
+		self.current_track_progress_string = tkinter.StringVar(value ='[Time]')
+		self.total_track_time_string = tkinter.StringVar(value ='[Time]')
+		tkinter.Label(self.current_track_progress_frame, textvariable=self.current_track_progress_string).grid(column=0, row=0, sticky=(N, S, W, E))
+		self.current_track_progress_scale = ttk.Scale(self.current_track_progress_frame, orient=HORIZONTAL, variable=self.current_track_progress, command=self.changed_track_progress)
+		self.current_track_progress_scale.grid(column=1, row=0, sticky=(N, S, W, E))
+		tkinter.Label(self.current_track_progress_frame, textvariable=self.total_track_time_string).grid(column=2, row=0, sticky=(N, S, W, E))
 
 		self.build_volume_frame()
 		self.volume_frame.grid(column=1, row=0, sticky=(S, W, E))
 		
 		self.playback_frame.columnconfigure(1, weight=1)
 		self.playback_frame.rowconfigure(0, weight=1)
+		self.current_track_progress_frame.columnconfigure(1, weight=1)
 
 		self.current_playback = []
 
@@ -174,7 +181,7 @@ class Player:
 			spotify_wrapper.play(album['uri'])
 
 	def name_changed(self, *args):
-		self.album_list.update(self.get_path())
+		self.album_list.set_items_with_path(self.get_path())
 	
 	def changed_shuffle(self, *args):
 		if self.album_shuffle.get() and self.track_shuffle.get():
@@ -197,14 +204,16 @@ class Player:
 		playback = spotify_wrapper.get_current_playback()
 		if playback is not None and playback['item'] is not None:
 			self.current_track_progress.set(playback['progress_ms']) # TODO: Make smoother
+			self.current_track_progress_string.set(datetime.timedelta(seconds=int(playback['progress_ms']/1000)))
 			self.volume.set(playback['device']['volume_percent'])
 
 			name = playback['item']['name']
 			if name != self.current_track_name.get():
 				self.current_track_progress_scale.configure(to=playback['item']['duration_ms'])
+				self.total_track_time_string.set(datetime.timedelta(seconds=int(playback['item']['duration_ms']/1000)))
 				album = playback['item']['album']
 				self.current_track_name.set(name)
-				self.current_album_name.set("Album: " + album['name'])
+				self.current_album_name.set("Album: " + album['name'] + " (Track: " + str(playback['item']['track_number']) + "/" + str(album['total_tracks']) + ")")
 				self.current_artist_name.set("Artist: " + playback['item']['artists'][0]['name'])  #TODO: Handle multiple artists
 				x = album['images'][0]['url']
 				with open('cover_cache/temp.jpg', 'wb') as file:
@@ -241,6 +250,6 @@ class Player:
 	# TODO: Save playback context to play something else but resume later
 	# TODO: Look at songs inside of albums/spotify playlists
 	# TODO: Repeat modes
-	# TODO: Retain order when album shuffle flag for playlists
+	# TODO: "Retain order when album shuffle"-flag for playlists
 	# TODO: Album/playlist covers
 
