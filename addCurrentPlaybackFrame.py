@@ -1,6 +1,5 @@
-from tkinter import N, W, S, E, ttk, messagebox
+from tkinter import N, W, S, E, ttk
 
-from utils import Utils
 from spotifyWrapper import spotify_wrapper
 
 class AddCurrentPlaybackFrame:

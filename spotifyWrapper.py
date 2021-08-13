@@ -193,9 +193,6 @@ class SpotifyWrapper:
 	
 	def get_current_playback(self):
 		return self.spotify.current_playback()
-	
-	# TODO: Spotify playlists as list items
-	# TODO: Synching with normal spotify playlist
 
 
 spotify_wrapper = SpotifyWrapper()
