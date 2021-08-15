@@ -1,12 +1,15 @@
 import tkinter
 from tkinter import N, W, S, E, ttk, messagebox
 
+from spotipy.client import Spotify
+
 from currentPlaylistFrame import CurrentPlaylistFrame
 from targetPlaylistFrame import TargetPlaylistFrame
 from uriFrame import UriFrame
 from addCurrentPlaybackFrame import AddCurrentPlaybackFrame
+from playlistNameEntry import PlaylistNameEntry
 from albumList import AlbumList
-from spotifyWrapper import spotify_wrapper
+from spotifyWrapper import SpotifyWrapper, spotify_wrapper
 from utils import Utils
 
 class Editor:
@@ -33,15 +36,36 @@ class Editor:
 		self.categorization_view.trace_add('write', self.changed_categorization_view)
 		ttk.Checkbutton(self.settings_frame, text='Show uncategorized albums', variable=self.categorization_view).grid(column=0, columnspan=2, row=2, sticky=(S, N, W, E))
 
-		self.album_list = AlbumList(root, self, 'Contents', self.clicked_playlist_album,
-			[["Copy", self.copy_album],
-			["↑", self.move_album_up, lambda album, _: album['lineNumber'] > 0],
-			["↓", self.move_album_down, lambda album, albumNum: album['lineNumber'] < albumNum-1],
-			["X", self.remove_album_from_list]])
+		self.album_list = AlbumList(root, self, 'Contents', self.open_album,
+			[
+				["Play", self.play],
+				["Copy", self.copy_album],
+				["↑", self.move_album_up, lambda album, _: album['lineNumber'] > 0],
+				["↓", self.move_album_down, lambda album, albumNum: album['lineNumber'] < albumNum-1],
+				["X", self.remove_album_from_list]
+			],
+			lambda album, _: not SpotifyWrapper.is_song(album['uri']))
 		self.album_list.grid(column=1, row=0, rowspan=2, sticky=(N, W, E, S))
 
-		self.saved_album_list = AlbumList(root, self, 'Saved Albums', self.play, [["Add", self.add_album], ["X", self.remove_saved_album]])
-		self.saved_album_list.grid(column=2, row=0, columnspan=3, sticky=(N, W, E, S))
+		self.notebook = ttk.Notebook(root)
+		self.saved_albums_frame = ttk.Frame(self.notebook, padding='4 5 4 5')
+		self.album_contents_frame = ttk.Frame(self.notebook, padding='4 5 4 5')
+		self.notebook.add(self.saved_albums_frame, text='Saved Albums')
+		self.notebook.add(self.album_contents_frame, text='Album Contents')
+		self.notebook.grid(column=2, row=0, columnspan=3, sticky=(N, W, E, S))
+
+		self.saved_album_list = AlbumList(self.saved_albums_frame, self, '', self.open_album, 
+			[
+				["Play", self.play],
+				["Add", self.add_album],
+				["X", self.remove_saved_album]
+			])
+		self.saved_album_list.grid(column=0, row=0, sticky=(N, W, E, S))
+
+		self.album_contents_uri_name_entry = PlaylistNameEntry(self.album_contents_frame, self.open_album_uri)
+		self.album_contents_uri_name_entry.grid(column=0, row=0, sticky=(N, S, W, E))
+		self.album_contents_list = AlbumList(self.album_contents_frame, self, '', self.play, [["Add", self.add_album]])
+		self.album_contents_list.grid(column=0, row=1, sticky=(N, W, E, S))
 
 		for child in root.winfo_children(): 
 			child.grid_configure(padx=5, pady=5)
@@ -58,6 +82,11 @@ class Editor:
 		self.left_frame.rowconfigure(2, weight=3)
 		self.left_frame.rowconfigure(3, weight=3)
 		self.left_frame.rowconfigure(4, weight=2)
+
+		self.saved_albums_frame.columnconfigure(0, weight=1)
+		self.saved_albums_frame.rowconfigure(0, weight=1)
+		self.album_contents_frame.columnconfigure(0, weight=1)
+		self.album_contents_frame.rowconfigure(1, weight=1)
 
 		self.name_changed()
 		self.update_saved_album_list()
@@ -123,13 +152,25 @@ class Editor:
 
 	def add_album(self, album):
 		self.add_uri(album['uri'])
+	
+	def open_album(self, album):
+		self.album_contents_uri_name_entry.set(album['uri'])
 
-	def clicked_playlist_album(self, album):
-		if album['type'] == spotify_wrapper.resource_type:
+	def open_album_uri(self, *args):
+		self.notebook.select(1)
+		uri = self.album_contents_uri_name_entry.get()
+		album = spotify_wrapper.get_resource(uri)
+		if len(album) == 0:
+			self.album_contents_list.set_items([])
+		elif SpotifyWrapper.is_album(uri):
+			self.album_contents_list.set_items(album['tracks']['items'])
+		elif SpotifyWrapper.is_spotify_playlist(uri):
+			self.album_contents_list.set_items([track['track'] for track in album['tracks']['items']])
+		elif SpotifyWrapper.is_arkhes_playlist(uri):
 			self.current_playlist_frame.save_current_position()
 			self.set_current_name(album['name'])
 		else:
-			self.play(album)
+			self.album_contents_list.set_items([])
 
 	def name_changed(self):
 		self.album_list.set_items_with_path(self.get_current_path())

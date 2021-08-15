@@ -14,7 +14,7 @@ class PlaylistNameEntry:
 		self.playlist_name_entry.grid(args)
 
 	def bind_return(self, func):
-		self.playlist_name_entry.bind('<Return>', (lambda event: func()))
+		self.playlist_name_entry.bind('<Return>', (lambda _: func()))
 	
 	def set(self, name):
 		self.playlist_name.set(name)

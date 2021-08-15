@@ -9,17 +9,21 @@ class AlbumList:
 	name_length = 50
 	max_items_per_page = 20
 
-	def __init__(self, parent, owner, title, album_clicked_callback, extra_callbacks=[]) -> None:
+	def __init__(self, parent, owner, title, album_clicked_callback, extra_callbacks=[], enabled_lambda=None) -> None:
 		self.album_clicked_callback = album_clicked_callback
 		self.extra_callbacks = extra_callbacks
 		self.owner = owner
 		self.items = []
+		self.enabled_lambda = enabled_lambda
 
 		self.build_frames(parent, title)
 		self.build_page_navigation(self.outer_frame)
 	
 	def build_frames(self, parent, title):
-		self.outer_frame = ttk.Labelframe(parent, text=title, padding='4 5 4 5')
+		if len(title) == 0:
+			self.outer_frame = ttk.Frame(parent)
+		else:
+			self.outer_frame = ttk.Labelframe(parent, text=title, padding='4 5 4 5')
 		self.albums_frame = ttk.Frame(self.outer_frame, padding='0 0 0 10')
 		self.albums_frame.grid(column=0, row=0, columnspan=3, sticky=(N, S, W, E))
 
@@ -82,24 +86,33 @@ class AlbumList:
 		if len(album_name) > self.name_length:
 			return album_name[:self.name_length-3] + "..."
 		return album_name
+
+	def add_button(self, album, x, y, text, width, command, disabled):
+		button = ttk.Button(self.albums_frame, text=text, style=album['type']+'.TButton', width = width)
+		button.configure(command = command)
+		button.grid(column = x, row = y, sticky = (W, E))
+		button.grid_configure(padx=1, pady=1)
+		if disabled:
+			button.state(['disabled'])
 	
-	def add_button(self, i, album, albumNum):
+	def add_button_row(self, album, albumNum, y):
 		button = ttk.Button(self.albums_frame, text=self.clamp_name(album['name']), style=album['type']+'.TButton', width = self.name_length + 2)
 		button.configure(command = lambda album=album: self.album_clicked_callback(album))
-		button.grid(column = 0, row = i, sticky = (W, E))
+		button.grid(column = 0, row = y, sticky = (W, E))
 		button.grid_configure(padx=1, pady=1)
 
+		self.add_button(album, 0, y, self.clamp_name(album['name']), self.name_length + 2,
+			lambda album=album: self.album_clicked_callback(album),
+			self.enabled_lambda is not None and not self.enabled_lambda(album, albumNum))
+
 		for extraButtonIndex, extra in enumerate(self.extra_callbacks):
-			extraButton = ttk.Button(self.albums_frame, text=extra[0], style=album['type']+'.TButton', width=len(extra[0]) + 2)
-			extraButton.configure(command = (lambda callback : lambda album=album: callback(album))(extra[1]))
-			extraButton.grid(column = extraButtonIndex + 1, row = i, sticky = (W, E))
-			extraButton.grid_configure(padx=1, pady=1)
-			if len(extra) > 2 and not extra[2](album, albumNum):
-				extraButton.state(['disabled'])
+			self.add_button(album, extraButtonIndex + 1, y, extra[0], len(extra[0]) + 2,
+				(lambda callback : lambda album=album: callback(album))(extra[1]),
+				len(extra) > 2 and not extra[2](album, albumNum))
 	
 	def add_buttons(self, albums):
 		for i, album in enumerate(albums):
-			self.add_button(i, album, len(albums))
+			self.add_button_row(album, len(albums), i)
 	
 	def destory_old_buttons(self):
 		for child in self.old_buttons:
