@@ -3,10 +3,10 @@
 import tkinter
 from tkinter import ttk
 
-class CreateToolTip(object):
+class CreateToolTip():
     def __init__(self, widget, text):
-        self.waittime = 500     #miliseconds
-        self.wraplength = 180   #pixels
+        self.wait_time = 500     #milliseconds
+        self.wrap_length = 180   #pixels
         self.widget = widget
         self.text = text
         self.widget.bind("<Enter>", self.enter)
@@ -24,7 +24,7 @@ class CreateToolTip(object):
 
     def schedule(self):
         self.unschedule()
-        self.id = self.widget.after(self.waittime, self.showtip)
+        self.id = self.widget.after(self.wait_time, self.showtip)
 
     def unschedule(self):
         id = self.id
@@ -43,7 +43,7 @@ class CreateToolTip(object):
         self.tw.wm_geometry("+%d+%d" % (x, y))
         label = ttk.Label(self.tw, text=self.text, justify='left',
                        background="#ffffff", relief='solid', borderwidth=1,
-                       wraplength = self.wraplength)
+                       wraplength = self.wrap_length)
         label.grid(column=0, row=0)
 
     def hidetip(self):

@@ -1,13 +1,15 @@
 from math import ceil
-from spotifyWrapper import spotify_wrapper
-from utils import Utils
+from pathlib import Path
+
 import tkinter
 from tkinter import N, W, S, E, ttk
-from pathlib import Path
+
+from tooltip import CreateToolTip
+from spotifyWrapper import spotify_wrapper
+from utils import Utils
 
 class AlbumList:
 	name_length = 50
-	max_items_per_page = 20
 
 	def __init__(self, parent, owner, title, album_clicked_callback, extra_callbacks=[], enabled_lambda=None) -> None:
 		self.album_clicked_callback = album_clicked_callback
@@ -25,7 +27,7 @@ class AlbumList:
 		else:
 			self.outer_frame = ttk.Labelframe(parent, text=title, padding='4 5 4 5')
 		self.albums_frame = ttk.Frame(self.outer_frame, padding='0 0 0 10')
-		self.albums_frame.grid(column=0, row=0, columnspan=3, sticky=(N, S, W, E))
+		self.albums_frame.grid(column=0, row=0, columnspan=4, sticky=(N, S, W, E))
 
 		self.albums_frame.columnconfigure(0, weight=1)
 		self.outer_frame.columnconfigure(0, weight=1)
@@ -42,6 +44,19 @@ class AlbumList:
 		self.page_label.grid(column=1, row=1, sticky=(N, S, W, E))
 		self.next_button = ttk.Button(parent, text='Next', command=lambda: self.change_page(+1))
 		self.next_button.grid(column=2, row=1, sticky=(N, S, W, E))
+
+		self.max_items_per_page_string = tkinter.StringVar(value="20")
+		self.max_items_per_page_string.trace_add('write', self.max_items_per_page_changed)
+		self.max_items_per_page_input = ttk.Entry(parent, width=3, textvariable=self.max_items_per_page_string)
+		self.max_items_per_page_input.grid(column=3, row=1, sticky=(N, S, W, E))
+		CreateToolTip(self.max_items_per_page_input, "Number of items per page")
+	
+	def save_dict(self):
+		return {'page' : self.page, 'max_items_per_page' : self.max_items_per_page()}
+	
+	def load_from(self, dct):
+		self.page = dct['page']
+		self.max_items_per_page_string.set(str(dct['max_items_per_page']))
 
 	def grid(self, **args):
 		self.outer_frame.grid(args)
@@ -63,8 +78,12 @@ class AlbumList:
 	
 	def change_page(self, diff):
 		self.page += diff
+		
+		items_per_page = self.max_items_per_page()
+		if items_per_page == 0:
+			return
 
-		maxPage = ceil(len(self.items) / self.max_items_per_page) - 1
+		maxPage = ceil(len(self.items) / items_per_page) - 1
 
 		if self.page <= 0:
 			self.page = 0
@@ -80,7 +99,7 @@ class AlbumList:
 
 		self.page_string.set(str(self.page + 1) + " / " + str(maxPage + 1))
 
-		self.update_with_albums(self.items[self.page*self.max_items_per_page : (self.page + 1)*self.max_items_per_page])
+		self.update_with_albums(self.items[self.page*items_per_page : (self.page + 1)*items_per_page])
 
 	def clamp_name(self, album_name):
 		if len(album_name) > self.name_length:
@@ -138,12 +157,13 @@ class AlbumList:
 	
 	def set_items_with_saved_albums(self, categorization_mode):
 		self.set_items(spotify_wrapper.saved_albums(categorization_mode))
-
-	# def update(self, path):
-	# 	self.clear_buttons()
-	# 	if Path(path).is_file():
-	# 		self.add_buttons(self.get_albums_from_file(path))
 	
-	# def update_with_saved_albums(self, page, categorization_mode):
-	# 	self.clear_buttons()
-	# 	self.add_buttons(spotify_wrapper.saved_albums(page, categorization_mode))
+	def max_items_per_page_changed(self, *args):
+		self.change_page(0)
+	
+	def max_items_per_page(self):
+		items_per_page = self.max_items_per_page_string.get()
+		if items_per_page.isdigit():
+			return int(items_per_page)
+		else:
+			return 0

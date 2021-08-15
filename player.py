@@ -41,13 +41,20 @@ class Player:
 		self.name_changed()
 	
 	def save_dict(self):
-		return {'track_shuffle' : self.track_shuffle.get(), 'album_shuffle' : self.album_shuffle.get(), 'current' : self.current_playlist_frame.save_dict(), 'volume' : self.current_playback_frame.volume.get()}
+		return {
+			'track_shuffle' : self.track_shuffle.get(),
+			'album_shuffle' : self.album_shuffle.get(),
+			'current' : self.current_playlist_frame.save_dict(),
+			'volume' : self.current_playback_frame.volume.get(),
+			'album_list' : self.album_list.save_dict()
+			}
 	
 	def load_from(self, dct):
 		self.track_shuffle.set(dct['track_shuffle'])
 		self.album_shuffle.set(dct['album_shuffle'])
 		self.current_playlist_frame.load_from(dct['current'])
 		self.current_playback_frame.volume.set(dct['volume'])
+		self.album_list.load_from(dct['album_list'])
 		
 		self.name_changed()
 	

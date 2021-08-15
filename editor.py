@@ -1,8 +1,6 @@
 import tkinter
 from tkinter import N, W, S, E, ttk, messagebox
 
-from spotipy.client import Spotify
-
 from currentPlaylistFrame import CurrentPlaylistFrame
 from targetPlaylistFrame import TargetPlaylistFrame
 from uriFrame import UriFrame
@@ -62,7 +60,7 @@ class Editor:
 			])
 		self.saved_album_list.grid(column=0, row=0, sticky=(N, W, E, S))
 
-		self.album_contents_uri_name_entry = PlaylistNameEntry(self.album_contents_frame, self.open_album_uri)
+		self.album_contents_uri_name_entry = PlaylistNameEntry(self.album_contents_frame, self.open_album_contents_uri)
 		self.album_contents_uri_name_entry.grid(column=0, row=0, sticky=(N, S, W, E))
 		self.album_contents_list = AlbumList(self.album_contents_frame, self, '', self.play, [["Add", self.add_album]])
 		self.album_contents_list.grid(column=0, row=1, sticky=(N, W, E, S))
@@ -92,15 +90,24 @@ class Editor:
 		self.update_saved_album_list()
 	
 	def save_dict(self):
-		return {'categorization_view' : self.categorization_view.get(), 'categorization_edit' : self.categorization_edit.get(), 'current' : self.current_playlist_frame.save_dict(),
-				'target' : self.get_target_name(), 'page' : self.saved_album_list.page}
+		return {
+			'categorization_view' : self.categorization_view.get(),
+			'categorization_edit' : self.categorization_edit.get(),
+			'current' : self.current_playlist_frame.save_dict(),
+			'target' : self.get_target_name(),
+			'album_list' : self.album_list.save_dict(),
+			'saved_album_list' : self.saved_album_list.save_dict(),
+			'album_contents_list' : self.album_contents_list.save_dict()
+			}
 	
 	def load_from(self, dct):
 		self.categorization_view.set(dct['categorization_view'])
 		self.categorization_edit.set(dct['categorization_edit'])
 		self.current_playlist_frame.load_from(dct['current'])
 		self.set_target_name(dct['target'])
-		self.saved_album_list.page = dct['page']
+		self.album_list.load_from(dct['album_list'])
+		self.saved_album_list.load_from(dct['saved_album_list'])
+		self.album_contents_list.load_from(dct['album_contents_list'])
 		
 		self.name_changed()
 		self.saved_album_list.set_items_with_saved_albums(self.categorization_view.get())
@@ -154,9 +161,13 @@ class Editor:
 		self.add_uri(album['uri'])
 	
 	def open_album(self, album):
-		self.album_contents_uri_name_entry.set(album['uri'])
+		if SpotifyWrapper.is_arkhes_playlist(album['uri']):
+			self.current_playlist_frame.save_current_position()
+			self.set_current_name(album['name'])
+		else:
+			self.album_contents_uri_name_entry.set(album['uri'])
 
-	def open_album_uri(self, *args):
+	def open_album_contents_uri(self, *args):
 		self.notebook.select(1)
 		uri = self.album_contents_uri_name_entry.get()
 		album = spotify_wrapper.get_resource(uri)
@@ -166,9 +177,6 @@ class Editor:
 			self.album_contents_list.set_items(album['tracks']['items'])
 		elif SpotifyWrapper.is_spotify_playlist(uri):
 			self.album_contents_list.set_items([track['track'] for track in album['tracks']['items']])
-		elif SpotifyWrapper.is_arkhes_playlist(uri):
-			self.current_playlist_frame.save_current_position()
-			self.set_current_name(album['name'])
 		else:
 			self.album_contents_list.set_items([])
 
