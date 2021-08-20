@@ -25,7 +25,7 @@ class Player:
 		ttk.Checkbutton(shuffle_frame, text='Track-Shuffle', variable=self.track_shuffle, command=self.changed_shuffle).grid(column=0, row=0, sticky=(N, S, W, E))
 		ttk.Checkbutton(shuffle_frame, text='Album-Shuffle', variable=self.album_shuffle, command=self.changed_shuffle).grid(column=1, row=0, sticky=(N, S, W, E))
 
-		self.album_list = AlbumList(root, self, 'Contents', self.clicked_album)
+		self.album_list = AlbumList(root, self, 'Contents', 10, self.clicked_album)
 		self.album_list.grid(column=1, row=0, rowspan=3, sticky=(N, W, E, S))
 
 		self.current_playback_frame = CurrentPlaybackFrame(self.root)

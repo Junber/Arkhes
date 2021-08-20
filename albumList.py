@@ -11,7 +11,7 @@ from utils import Utils
 class AlbumList:
 	name_length = 50
 
-	def __init__(self, parent, owner, title, album_clicked_callback, extra_callbacks=[], enabled_lambda=None) -> None:
+	def __init__(self, parent, owner, title, default_item_number, album_clicked_callback, extra_callbacks=[], enabled_lambda=None) -> None:
 		self.album_clicked_callback = album_clicked_callback
 		self.extra_callbacks = extra_callbacks
 		self.owner = owner
@@ -19,7 +19,7 @@ class AlbumList:
 		self.enabled_lambda = enabled_lambda
 
 		self.build_frames(parent, title)
-		self.build_page_navigation(self.outer_frame)
+		self.build_page_navigation(self.outer_frame, default_item_number)
 	
 	def build_frames(self, parent, title):
 		if len(title) == 0:
@@ -35,7 +35,7 @@ class AlbumList:
 		self.outer_frame.columnconfigure(2, weight=1)
 		self.outer_frame.rowconfigure(0, weight=1)
 	
-	def build_page_navigation(self, parent):
+	def build_page_navigation(self, parent, default_item_number):
 		self.page = 0
 		self.prev_button = ttk.Button(parent, text='Prev', command=lambda: self.change_page(-1))
 		self.prev_button.grid(column=0, row=1, sticky=(N, S, W, E))
@@ -45,7 +45,7 @@ class AlbumList:
 		self.next_button = ttk.Button(parent, text='Next', command=lambda: self.change_page(+1))
 		self.next_button.grid(column=2, row=1, sticky=(N, S, W, E))
 
-		self.max_items_per_page_string = tkinter.StringVar(value="20")
+		self.max_items_per_page_string = tkinter.StringVar(value=str(default_item_number))
 		self.max_items_per_page_string.trace_add('write', self.max_items_per_page_changed)
 		self.max_items_per_page_input = ttk.Entry(parent, width=3, textvariable=self.max_items_per_page_string)
 		self.max_items_per_page_input.grid(column=3, row=1, sticky=(N, S, W, E))

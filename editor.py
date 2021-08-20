@@ -34,7 +34,7 @@ class Editor:
 		self.categorization_view.trace_add('write', self.changed_categorization_view)
 		ttk.Checkbutton(self.settings_frame, text='Show uncategorized albums', variable=self.categorization_view).grid(column=0, columnspan=2, row=2, sticky=(S, N, W, E))
 
-		self.album_list = AlbumList(root, self, 'Contents', self.open_album,
+		self.album_list = AlbumList(root, self, 'Contents', 24, self.open_album,
 			[
 				["Play", self.play],
 				["Copy", self.copy_album],
@@ -52,7 +52,7 @@ class Editor:
 		self.notebook.add(self.album_contents_frame, text='Album Contents')
 		self.notebook.grid(column=2, row=0, columnspan=3, sticky=(N, W, E, S))
 
-		self.saved_album_list = AlbumList(self.saved_albums_frame, self, '', self.open_album, 
+		self.saved_album_list = AlbumList(self.saved_albums_frame, self, '', 24, self.open_album, 
 			[
 				["Play", self.play],
 				["Add", self.add_album],
@@ -62,7 +62,7 @@ class Editor:
 
 		self.album_contents_uri_name_entry = PlaylistNameEntry(self.album_contents_frame, self.open_album_contents_uri)
 		self.album_contents_uri_name_entry.grid(column=0, row=0, sticky=(N, S, W, E))
-		self.album_contents_list = AlbumList(self.album_contents_frame, self, '', self.play, [["Add", self.add_album]])
+		self.album_contents_list = AlbumList(self.album_contents_frame, self, '', 24, self.play, [["Add", self.add_album]])
 		self.album_contents_list.grid(column=0, row=1, sticky=(N, W, E, S))
 
 		for child in root.winfo_children(): 
@@ -119,7 +119,7 @@ class Editor:
 		spotify_wrapper.shuffle(False)
 		spotify_wrapper.play(album['uri'])
 	
-	def album_categorized(self, uri):
+	def uri_categorized(self, uri):
 		self.name_changed()
 		if self.categorization_edit.get():
 			spotify_wrapper.add_categorized_album(uri)
@@ -136,14 +136,14 @@ class Editor:
 		self.album_uncategorized(album)
 	
 	def remove_saved_album(self, album):
-		result = messagebox.askyesno('Delete', 'Do you really want to remove this from your saved albums on Spotify?')
+		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved albums on Spotify?' % album['name'])
 		if result:
 			spotify_wrapper.remove_saved_album(album['uri'])
 			self.update_saved_album_list()
 
 	def copy_album(self, album):
 		Utils.add_line_to_file(self.get_target_path(), album['uri'])
-		self.album_categorized(album)
+		self.uri_categorized(album['uri'])
 	
 	def move_album_up(self, album):
 		Utils.remove_line_down(self.get_current_path(), album['lineNumber'] - 1)
@@ -155,7 +155,7 @@ class Editor:
 	
 	def add_uri(self, uri):
 		Utils.add_line_to_file(self.get_current_path(), uri)
-		self.album_categorized(uri)
+		self.uri_categorized(uri)
 
 	def add_album(self, album):
 		self.add_uri(album['uri'])

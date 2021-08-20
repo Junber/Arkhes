@@ -12,3 +12,6 @@ WIP
 - [ ] "Retain order when album shuffle"-flag for playlists
 - [ ] Album/playlist covers
 - [ ] Synching with normal spotify playlist
+- [ ] Artists are just lists of albums too
+- [ ] Option to remove duplicates from playback
+- [ ] Handle cyclical inclusions
