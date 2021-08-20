@@ -1,9 +1,9 @@
-import json
+import json, requests
+from pathlib import Path
+from PIL import ImageTk, Image
+
 import spotipy
 from spotipy.oauth2 import SpotifyPKCE
-import json
-from pathlib import Path
-import math
 
 
 class SpotifyWrapper:
@@ -13,8 +13,6 @@ class SpotifyWrapper:
 	scope = 'user-library-read user-modify-playback-state user-read-playback-state user-library-modify'
 
 	cache_file_name = 'cache.json'
-
-	SAVED_ALBUM_PAGE_LIMIT = 20
 
 	def __init__(self) -> None:
 		self.spotify = spotipy.Spotify(auth_manager=SpotifyPKCE(scope=self.scope, client_id='17c952718daa4eaebc2ccf096036a42f',
@@ -165,12 +163,6 @@ class SpotifyWrapper:
 		else:
 			return self.saved_albums_cache
 	
-	def saved_album_pages(self, categorization_mode):
-		if categorization_mode:
-			return math.ceil(len(self.uncategorized_albums) / self.SAVED_ALBUM_PAGE_LIMIT)
-		else:
-			return math.ceil(len(self.saved_albums_cache) / self.SAVED_ALBUM_PAGE_LIMIT)
-	
 	def shuffle(self, shouldShuffle):
 		self.spotify.shuffle(shouldShuffle, device_id=self.get_device_id())
 	
@@ -193,6 +185,19 @@ class SpotifyWrapper:
 	
 	def get_current_playback(self):
 		return self.spotify.current_playback()
+	
+	def get_album_cover(self, album, size):
+		path = 'cover_cache/%s.jpg' % album['id']
+
+		if not Path(path).is_file():
+			url = album['images'][0]['url']
+			with open(path, 'wb') as file:
+				file.write(requests.get(url).content)
+
+		return self.get_image(path, size)
+	
+	def get_image(self, path, size):
+		return ImageTk.PhotoImage(Image.open(path).resize([size, size]))
 
 
 spotify_wrapper = SpotifyWrapper()

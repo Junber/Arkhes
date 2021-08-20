@@ -1,13 +1,14 @@
-import requests, datetime
+import datetime
 
 import tkinter
 from tkinter import N, W, S, E, ttk, HORIZONTAL
-from PIL import ImageTk, Image
 
 from spotifyWrapper import spotify_wrapper
 from playbackButtonFrame import PlaybackButtonFrame
 
 class CurrentPlaybackFrame:
+	cover_size = 320
+
 	def __init__(self, root):
 		self.root = root
 		self.active = True
@@ -16,7 +17,7 @@ class CurrentPlaybackFrame:
 
 		self.album_cover_label = ttk.Label(self.frame, anchor='center')
 		self.album_cover_label.grid(column=0, row=0, rowspan=5, sticky=(N, S, W, E))
-		self.set_cover('no_cover.jpg')
+		self.set_cover(spotify_wrapper.get_image('no_cover.jpg', self.cover_size))
 
 		self.current_album_name = tkinter.StringVar(value='[Album]') # TODO: Save album and artist to recover on start-up
 		self.current_album_label = ttk.Label(self.frame, textvar=self.current_album_name, anchor='center')
@@ -63,8 +64,7 @@ class CurrentPlaybackFrame:
 	def grid(self, **args):
 		self.frame.grid(args)
 	
-	def set_cover(self, path):
-		img = ImageTk.PhotoImage(Image.open(path).resize([320, 320]))
+	def set_cover(self, img):
 		self.album_cover_label.configure(image = img)
 		self.album_cover_label.image = img
 	
@@ -92,10 +92,7 @@ class CurrentPlaybackFrame:
 				self.set_current_track_name(name)
 				self.current_album_name.set("Album: " + album['name'] + " (Track: " + str(playback['item']['track_number']) + "/" + str(album['total_tracks']) + ")")
 				self.current_artist_name.set("Artist: " + playback['item']['artists'][0]['name'])  #TODO: Handle multiple artists
-				x = album['images'][0]['url']
-				with open('cover_cache/temp.jpg', 'wb') as file:
-					file.write(requests.get(x).content) # TODO: Cache and stuff
-				self.set_cover('cover_cache/temp.jpg')
+				self.set_cover(spotify_wrapper.get_album_cover(album, self.cover_size))
 	
 	def get_current_track_name(self):
 		return self.playback_button_frame.current_track_name.get()
