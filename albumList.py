@@ -1,5 +1,6 @@
 from math import ceil
 from pathlib import Path
+from functools import partial
 
 import tkinter
 from tkinter import N, W, S, E, ttk
@@ -116,17 +117,17 @@ class AlbumList:
 	
 	def add_button_row(self, album, albumNum, y):
 		button = ttk.Button(self.albums_frame, text=self.clamp_name(album['name']), style=album['type']+'.TButton', width = self.name_length + 2)
-		button.configure(command = lambda album=album: self.album_clicked_callback(album))
+		button.configure(command = partial(self.album_clicked_callback, album))
 		button.grid(column = 0, row = y, sticky = (W, E))
 		button.grid_configure(padx=1, pady=1)
 
 		self.add_button(album, 0, y, self.clamp_name(album['name']), self.name_length + 2,
-			lambda album=album: self.album_clicked_callback(album),
+			partial(self.album_clicked_callback, album),
 			self.enabled_lambda is not None and not self.enabled_lambda(album, albumNum))
 
 		for extraButtonIndex, extra in enumerate(self.extra_callbacks):
 			self.add_button(album, extraButtonIndex + 1, y, extra[0], len(extra[0]) + 2,
-				(lambda callback : lambda album=album: callback(album))(extra[1]),
+				partial(extra[1], album),
 				len(extra) > 2 and not extra[2](album, albumNum))
 	
 	def add_buttons(self, albums):

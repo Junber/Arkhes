@@ -107,15 +107,19 @@ class SpotifyWrapper:
 				playlist = self.spotify.playlist(uri)
 				self.resource_cache[uri] = playlist
 
+	@staticmethod
 	def is_album(uri):
 		return uri.startswith('https://open.spotify.com/album/') or uri.startswith('spotify:album')
 
+	@staticmethod
 	def is_song(uri):
 		return uri.startswith('https://open.spotify.com/track/') or uri.startswith('spotify:track')
 
+	@staticmethod
 	def is_spotify_playlist(uri):
 		return uri.startswith('https://open.spotify.com/playlist/') or uri.startswith('spotify:playlist')
 
+	@staticmethod
 	def is_arkhes_playlist(uri):
 		return uri.startswith(SpotifyWrapper.prefix)
 

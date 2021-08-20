@@ -27,7 +27,14 @@ class PlaybackButtonFrame:
 	
 	def grid(self, **args):
 		self.frame.grid(args)
-
+	
+	def set_album_navigation_enabled(self, state):
+		if state:
+			self.go_back_album_button.state(['!disabled'])
+			self.go_forward_album_button.state(['!disabled'])
+		else:
+			self.go_back_album_button.state(['disabled'])
+			self.go_forward_album_button.state(['disabled'])
 
 	def go_back_album(self, *args):
 		pass # TODO

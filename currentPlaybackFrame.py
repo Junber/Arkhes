@@ -108,3 +108,6 @@ class CurrentPlaybackFrame:
 		if not self.active and new_active:
 			self.update_current_track()
 		self.active = new_active
+
+	def set_album_navigation_enabled(self, state):
+		self.playback_button_frame.set_album_navigation_enabled(state)

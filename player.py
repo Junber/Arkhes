@@ -122,12 +122,7 @@ class Player:
 		self.album_list.set_items_with_path(self.get_path())
 	
 	def changed_shuffle(self, *args):
-		if self.album_shuffle.get() and self.track_shuffle.get():
-			self.go_back_album_button.state(['disabled'])
-			self.go_forward_album_button.state(['disabled'])
-		else:
-			self.go_back_album_button.state(['!disabled'])
-			self.go_forward_album_button.state(['!disabled'])
+		self.current_playback_frame.set_album_navigation_enabled(not (self.album_shuffle.get() and self.track_shuffle.get()))
 	
 	def set_active(self, new_active):
 		self.current_playback_frame.set_active(new_active)
