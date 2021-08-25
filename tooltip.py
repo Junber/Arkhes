@@ -4,50 +4,46 @@ import tkinter
 from tkinter import ttk
 
 class CreateToolTip():
-    def __init__(self, widget, text):
-        self.wait_time = 500     #milliseconds
-        self.wrap_length = 180   #pixels
-        self.widget = widget
-        self.text = text
-        self.widget.bind("<Enter>", self.enter)
-        self.widget.bind("<Leave>", self.leave)
-        self.widget.bind("<ButtonPress>", self.leave)
-        self.id = None
-        self.tw = None
+	def __init__(self, widget, text):
+		self.wait_time = 500     #milliseconds
+		self.wrap_length = 180   #pixels
+		self.widget = widget
+		self.text = text
+		self.widget.bind("<Enter>", self.enter)
+		self.widget.bind("<Leave>", self.leave)
+		self.widget.bind("<ButtonPress>", self.leave)
+		self.id = None
+		self.toplevel = None
 
-    def enter(self, event=None):
-        self.schedule()
+	def enter(self, *_):
+		self.schedule()
 
-    def leave(self, event=None):
-        self.unschedule()
-        self.hidetip()
+	def leave(self, *_):
+		self.unschedule()
+		self.hidetip()
 
-    def schedule(self):
-        self.unschedule()
-        self.id = self.widget.after(self.wait_time, self.showtip)
+	def schedule(self):
+		self.unschedule()
+		self.id = self.widget.after(self.wait_time, self.showtip)
 
-    def unschedule(self):
-        id = self.id
-        self.id = None
-        if id:
-            self.widget.after_cancel(id)
+	def unschedule(self):
+		if self.id:
+			self.widget.after_cancel(self.id)
+			self.id = None
 
-    def showtip(self, event=None):
-        x = y = 0
-        x, y, cx, cy = self.widget.bbox("insert")
-        x += self.widget.winfo_rootx() + 57
-        y += self.widget.winfo_rooty() + 27
+	def showtip(self, *_):
+		x = self.widget.winfo_rootx() + self.widget.winfo_width()
+		y = self.widget.winfo_rooty() + self.widget.winfo_height()
 
-        self.tw = tkinter.Toplevel(self.widget)
-        self.tw.wm_overrideredirect(True)
-        self.tw.wm_geometry("+%d+%d" % (x, y))
-        label = ttk.Label(self.tw, text=self.text, justify='left',
-                       background="#ffffff", relief='solid', borderwidth=1,
-                       wraplength = self.wrap_length)
-        label.grid(column=0, row=0)
+		self.toplevel = tkinter.Toplevel(self.widget)
+		self.toplevel.wm_overrideredirect(True)
+		self.toplevel.wm_geometry("+%d+%d" % (x, y))
+		label = ttk.Label(self.toplevel, text=self.text, justify='left',
+					   background="#ffffff", relief='solid', borderwidth=1,
+					   wraplength = self.wrap_length)
+		label.grid(column=0, row=0)
 
-    def hidetip(self):
-        tw = self.tw
-        self.tw= None
-        if tw:
-            tw.destroy()
+	def hidetip(self):
+		if self.toplevel:
+			self.toplevel.destroy()
+			self.toplevel = None

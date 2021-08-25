@@ -9,8 +9,9 @@ from playbackButtonFrame import PlaybackButtonFrame
 class CurrentPlaybackFrame:
 	cover_size = 320
 
-	def __init__(self, root):
+	def __init__(self, root, player):
 		self.root = root
+		self.player = player
 		self.active = True
 
 		self.frame = ttk.Labelframe(root, text='Current Playback', padding='5 5 5 5')
@@ -27,7 +28,7 @@ class CurrentPlaybackFrame:
 		self.current_artist_label = ttk.Label(self.frame, textvar=self.current_artist_name, anchor='center')
 		self.current_artist_label.grid(column=1, row=2, sticky=(S, W, E))
 
-		self.playback_button_frame = PlaybackButtonFrame(self.frame)
+		self.playback_button_frame = PlaybackButtonFrame(self.frame, self.player)
 		self.playback_button_frame.grid(column=1, row=3, sticky=(S, W, E))
 
 		self.current_track_progress_frame = tkinter.Frame(self.frame)
@@ -68,10 +69,10 @@ class CurrentPlaybackFrame:
 		self.album_cover_label.configure(image = img)
 		self.album_cover_label.image = img
 	
-	def changed_volume(self, *args):
+	def changed_volume(self, *_):
 		spotify_wrapper.set_volume(self.volume.get())
 	
-	def changed_track_progress(self, *args):
+	def changed_track_progress(self, *_):
 		spotify_wrapper.set_track_progress(self.current_track_progress.get())
 	
 	def update_current_track(self):
@@ -86,6 +87,7 @@ class CurrentPlaybackFrame:
 
 			name = playback['item']['name']
 			if name != self.get_current_track_name():
+				self.player.update_playback_position(playback['item']['uri'])
 				self.current_track_progress_scale.configure(to=playback['item']['duration_ms'])
 				self.total_track_time_string.set(datetime.timedelta(seconds=int(playback['item']['duration_ms']/1000)))
 				album = playback['item']['album']

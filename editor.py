@@ -167,7 +167,7 @@ class Editor:
 		else:
 			self.album_contents_uri_name_entry.set(album['uri'])
 
-	def open_album_contents_uri(self, *args):
+	def open_album_contents_uri(self, *_):
 		self.notebook.select(1)
 		uri = self.album_contents_uri_name_entry.get()
 		album = spotify_wrapper.get_resource(uri)
@@ -191,7 +191,7 @@ class Editor:
 		spotify_wrapper.reload_saved_album_cache()
 		self.update_saved_album_list()
 
-	def changed_categorization_view(self, *args):
+	def changed_categorization_view(self, *_):
 		self.update_saved_album_list()
 
 

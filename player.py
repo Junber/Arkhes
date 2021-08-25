@@ -11,6 +11,9 @@ from currentPlaybackFrame import CurrentPlaybackFrame
 
 class Player:
 	def __init__(self, root):
+		self.current_playback = []
+		self.current_playback_album_position = 0
+		self.current_playback_track_position = 0
 		self.root = root
 
 		self.current_playlist_frame = CurrentPlaylistFrame(root, self)
@@ -28,7 +31,7 @@ class Player:
 		self.album_list = AlbumList(root, self, 'Contents', 10, self.clicked_album)
 		self.album_list.grid(column=1, row=0, rowspan=3, sticky=(N, W, E, S))
 
-		self.current_playback_frame = CurrentPlaybackFrame(self.root)
+		self.current_playback_frame = CurrentPlaybackFrame(self.root, self)
 		self.current_playback_frame.grid(column=0, row=3, columnspan=2, sticky=(N, S, W, E))
 
 		for thing in [root, shuffle_frame]:
@@ -104,8 +107,10 @@ class Player:
 	def get_path(self):
 		return self.current_playlist_frame.name_entry.get_path()
 	
-	def play(self, *args):
+	def play(self, *_):
 		self.current_playback = self.get_uris_from_file_and_shuffle(self.get_path())
+		self.current_playback_album_position = 0
+		self.current_playback_track_position = 0
 		uris = self.flatten_uris(self.current_playback)
 		if len(uris) > 0:
 			spotify_wrapper.play_uris(uris)
@@ -118,12 +123,32 @@ class Player:
 			spotify_wrapper.shuffle(self.track_shuffle.get())
 			spotify_wrapper.play(album['uri'])
 
-	def name_changed(self, *args):
+	def name_changed(self, *_):
 		self.album_list.set_items_with_path(self.get_path())
 	
-	def changed_shuffle(self, *args):
+	def changed_shuffle(self, *_):
 		self.current_playback_frame.set_album_navigation_enabled(not (self.album_shuffle.get() and self.track_shuffle.get()))
 	
 	def set_active(self, new_active):
 		self.current_playback_frame.set_active(new_active)
+	
+	def update_playback_position(self, current_song_uri):
+		while self.current_playback_album_position < len(self.current_playback):
+			while self.current_playback_track_position < len(self.current_playback[self.current_playback_album_position]):
+				if self.current_playback[self.current_playback_album_position][self.current_playback_track_position] == current_song_uri:
+					return
+				self.current_playback_track_position += 1
+
+			self.current_playback_track_position = 0
+			self.current_playback_album_position += 1
+	
+	def tracks_to_next_album(self):
+		if self.current_playback_album_position >= len(self.current_playback):
+			return 1
+		return len(self.current_playback[self.current_playback_album_position]) - self.current_playback_track_position
+	
+	def tracks_to_previous_album(self):
+		if self.current_playback_album_position >= len(self.current_playback):
+			return 1
+		return self.current_playback_track_position + 1
 

@@ -32,7 +32,7 @@ class CurrentPlaylistFrame:
 		self.redo_stack = dct['redo_stack']
 		self.set_undo_redo_button_state()
 
-	def name_changed(self, *args):
+	def name_changed(self, *_):
 		self.editor.name_changed()
 	
 	def save_current_position(self):

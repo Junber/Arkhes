@@ -10,7 +10,7 @@ class UriFrame:
 
 		self.frame = ttk.Labelframe(root, text='URI', padding='5 5 5 5')
 		self.frame.columnconfigure(0, weight=1)
-		self.uri_name_entry = PlaylistNameEntry(self.frame, lambda *args: args)
+		self.uri_name_entry = PlaylistNameEntry(self.frame, lambda *_: _)
 		self.uri_name_entry.grid(column=0, row=0, columnspan=2, sticky=(N, S, W, E))
 		self.uri_name_entry.bind_return(self.add_uri)
 		ttk.Button(self.frame, text='Add', command=self.add_uri).grid(column=0, row=1, sticky=(S, N, W, E))

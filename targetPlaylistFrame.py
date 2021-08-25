@@ -13,7 +13,7 @@ class TargetPlaylistFrame:
 
 		self.frame = ttk.Labelframe(root, text='Target', padding='5 5 5 5')
 
-		self.name_entry = PlaylistNameEntry(self.frame, lambda *args: args)
+		self.name_entry = PlaylistNameEntry(self.frame, lambda *_: _)
 		self.name_entry.grid(column=0, row=0, columnspan=2, sticky=(N, S, W, E))
 		self.name_entry.bind_return(self.add_playlist)
 		self.frame.columnconfigure(0, weight=1)

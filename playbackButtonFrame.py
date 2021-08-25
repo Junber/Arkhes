@@ -5,7 +5,9 @@ from spotifyWrapper import spotify_wrapper
 from tooltip import CreateToolTip
 
 class PlaybackButtonFrame:
-	def __init__(self, root):
+	def __init__(self, root, player):
+		self.player = player
+
 		self.frame = ttk.Frame(root)
 
 		self.go_back_album_button = ttk.Button(self.frame, text='<<', command=self.go_back_album)
@@ -36,17 +38,19 @@ class PlaybackButtonFrame:
 			self.go_back_album_button.state(['disabled'])
 			self.go_forward_album_button.state(['disabled'])
 
-	def go_back_album(self, *args):
-		pass # TODO
+	def go_back_album(self, *_):
+		for _ in range(self.player.tracks_to_previous_album()):
+			self.go_back_track()
 
-	def go_forward_album(self, *args):
-		pass # TODO
+	def go_forward_album(self, *_):
+		for _ in range(self.player.tracks_to_next_album()):
+			self.go_forward_track()
 
-	def go_back_track(self, *args):
+	def go_back_track(self, *_):
 		spotify_wrapper.go_back_track()
 
-	def go_forward_track(self, *args):
+	def go_forward_track(self, *_):
 		spotify_wrapper.go_forward_track()
 	
-	def pause(self, *args):
+	def pause(self, *_):
 		spotify_wrapper.toggle_pause()
