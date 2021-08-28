@@ -1,4 +1,4 @@
-from tkinter import N, W, S, E, ttk
+from tkinter import ttk
 import tkinter
 from utils import Utils
 

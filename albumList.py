@@ -159,6 +159,12 @@ class AlbumList:
 	def set_items_with_saved_albums(self, categorization_mode):
 		self.set_items(spotify_wrapper.saved_albums(categorization_mode))
 	
+	def set_items_with_saved_playlists(self, categorization_mode):
+		self.set_items(spotify_wrapper.saved_playlists(categorization_mode))
+
+	def set_items_with_saved_songs(self, categorization_mode):
+		self.set_items(spotify_wrapper.saved_songs(categorization_mode))
+	
 	def max_items_per_page_changed(self, *_):
 		self.change_page(0)
 	

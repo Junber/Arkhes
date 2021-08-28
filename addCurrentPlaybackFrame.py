@@ -16,10 +16,10 @@ class AddCurrentPlaybackFrame:
 		self.frame.grid(args)
 
 	def add_song(self):
-		self.editor.add_album(spotify_wrapper.get_current_playback()['item'])
+		self.editor.add_item(spotify_wrapper.get_current_playback()['item'])
 	
 	def add_album(self):
-		self.editor.add_album(spotify_wrapper.get_current_playback()['item']['album'])
+		self.editor.add_item(spotify_wrapper.get_current_playback()['item']['album'])
 	
 	def add_context(self):
-		self.editor.add_album(spotify_wrapper.get_current_playback()['context'])
+		self.editor.add_item(spotify_wrapper.get_current_playback()['context'])

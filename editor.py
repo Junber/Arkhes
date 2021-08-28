@@ -26,43 +26,71 @@ class Editor:
 		
 		self.settings_frame = ttk.Labelframe(self.left_frame, text='Settings', padding='5 5 5 5')
 		self.settings_frame.grid(column=0, row=4, sticky=(S, W, E))
-		ttk.Button(self.settings_frame, text='Clear Cache', command=self.clear_cache).grid(column=0, row=0, sticky=(S, N, W, E))
-		ttk.Button(self.settings_frame, text='Update Saved Albums', command=self.update_saved_albums).grid(column=1, row=0, sticky=(S, N, W, E))
+		ttk.Label(self.settings_frame, text='Update', width=0).grid(column=0, row=0, sticky=(S, N, W, E))
+		ttk.Button(self.settings_frame, text='Cache', command=self.clear_cache, width=0).grid(column=1, row=0, sticky=(S, N, W, E))
+		ttk.Button(self.settings_frame, text='Albums', command=self.update_saved_albums, width=0).grid(column=2, row=0, sticky=(S, N, W, E))
+		ttk.Button(self.settings_frame, text='Playlists', command=self.update_saved_playlists, width=0).grid(column=3, row=0, sticky=(S, N, W, E))
+		ttk.Button(self.settings_frame, text='Songs', command=self.update_saved_songs, width=0).grid(column=4, row=0, sticky=(S, N, W, E))
 		self.categorization_edit = tkinter.BooleanVar(value=True)
-		ttk.Checkbutton(self.settings_frame, text='Edit categorization state', variable=self.categorization_edit).grid(column=0, columnspan=2, row=1, sticky=(S, N, W, E))
+		ttk.Checkbutton(self.settings_frame, text='Edit categorization state', variable=self.categorization_edit).grid(column=0, columnspan=5, row=1, sticky=(S, N, W, E))
 		self.categorization_view = tkinter.BooleanVar(value=True)
 		self.categorization_view.trace_add('write', self.changed_categorization_view)
-		ttk.Checkbutton(self.settings_frame, text='Show uncategorized albums', variable=self.categorization_view).grid(column=0, columnspan=2, row=2, sticky=(S, N, W, E))
+		ttk.Checkbutton(self.settings_frame, text='Show uncategorized items', variable=self.categorization_view).grid(column=0, columnspan=5, row=2, sticky=(S, N, W, E))
 
 		self.album_list = AlbumList(root, self, 'Contents', 24, self.open_album,
 			[
 				["Play", self.play],
-				["Copy", self.copy_album],
-				["↑", self.move_album_up, lambda album, _: album['lineNumber'] > 0],
-				["↓", self.move_album_down, lambda album, albumNum: album['lineNumber'] < albumNum-1],
-				["X", self.remove_album_from_list]
+				["Copy", self.copy_item],
+				["↑", self.move_item_up, lambda album, _: album['lineNumber'] > 0],
+				["↓", self.move_item_down, lambda album, albumNum: album['lineNumber'] < albumNum-1],
+				["X", self.remove_item_from_list]
 			],
 			lambda album, _: not SpotifyWrapper.is_song(album['uri']))
 		self.album_list.grid(column=1, row=0, rowspan=2, sticky=(N, W, E, S))
 
 		self.notebook = ttk.Notebook(root)
 		self.saved_albums_frame = ttk.Frame(self.notebook, padding='4 5 4 5')
+		self.saved_playlists_frame = ttk.Frame(self.notebook, padding='4 5 4 5')
+		self.saved_songs_frame = ttk.Frame(self.notebook, padding='4 5 4 5')
 		self.album_contents_frame = ttk.Frame(self.notebook, padding='4 5 4 5')
 		self.notebook.add(self.saved_albums_frame, text='Saved Albums')
-		self.notebook.add(self.album_contents_frame, text='Album Contents')
+		self.notebook.add(self.saved_playlists_frame, text='Saved Playlists')
+		self.notebook.add(self.saved_songs_frame, text='Saved Songs')
+		self.notebook.add(self.album_contents_frame, text='Contents')
 		self.notebook.grid(column=2, row=0, columnspan=3, sticky=(N, W, E, S))
 
 		self.saved_album_list = AlbumList(self.saved_albums_frame, self, '', 24, self.open_album, 
 			[
 				["Play", self.play],
-				["Add", self.add_album],
+				["Add", self.add_item],
 				["X", self.remove_saved_album]
 			])
 		self.saved_album_list.grid(column=0, row=0, sticky=(N, W, E, S))
 
+		self.saved_playlists_list = AlbumList(self.saved_playlists_frame, self, '', 24, self.open_album, 
+			[
+				["Play", self.play],
+				["Add", self.add_item],
+				["X", self.remove_saved_playlist]
+			])
+		self.saved_playlists_list.grid(column=0, row=0, sticky=(N, W, E, S))
+
+		self.saved_songs_list = AlbumList(self.saved_songs_frame, self, '', 24, self.open_album, 
+			[
+				["Play", self.play],
+				["Add", self.add_item],
+				["X", self.remove_saved_song]
+			], lambda *_: False)
+		self.saved_songs_list.grid(column=0, row=0, sticky=(N, W, E, S))
+
 		self.album_contents_uri_name_entry = PlaylistNameEntry(self.album_contents_frame, self.open_album_contents_uri)
 		self.album_contents_uri_name_entry.grid(column=0, row=0, sticky=(N, S, W, E))
-		self.album_contents_list = AlbumList(self.album_contents_frame, self, '', 24, self.play, [["Add", self.add_album]])
+		self.album_contents_list = AlbumList(self.album_contents_frame, self, '', 24, self.open_album,
+			[
+				["Play", self.play],
+				["Add", self.add_item]
+			],
+			lambda *_: False)
 		self.album_contents_list.grid(column=0, row=1, sticky=(N, W, E, S))
 
 		for child in root.winfo_children(): 
@@ -83,11 +111,17 @@ class Editor:
 
 		self.saved_albums_frame.columnconfigure(0, weight=1)
 		self.saved_albums_frame.rowconfigure(0, weight=1)
+		self.saved_playlists_frame.columnconfigure(0, weight=1)
+		self.saved_playlists_frame.rowconfigure(0, weight=1)
+		self.saved_songs_frame.columnconfigure(0, weight=1)
+		self.saved_songs_frame.rowconfigure(0, weight=1)
 		self.album_contents_frame.columnconfigure(0, weight=1)
 		self.album_contents_frame.rowconfigure(1, weight=1)
 
 		self.name_changed()
 		self.update_saved_album_list()
+		self.update_saved_playlists_list()
+		self.update_saved_songs_list()
 	
 	def save_dict(self):
 		return {
@@ -97,6 +131,8 @@ class Editor:
 			'target' : self.get_target_name(),
 			'album_list' : self.album_list.save_dict(),
 			'saved_album_list' : self.saved_album_list.save_dict(),
+			'saved_playlists_list' : self.saved_playlists_list.save_dict(),
+			'saved_songs_list' : self.saved_songs_list.save_dict(),
 			'album_contents_list' : self.album_contents_list.save_dict()
 			}
 	
@@ -107,13 +143,23 @@ class Editor:
 		self.set_target_name(dct['target'])
 		self.album_list.load_from(dct['album_list'])
 		self.saved_album_list.load_from(dct['saved_album_list'])
+		self.saved_playlists_list.load_from(dct['saved_playlists_list'])
+		self.saved_songs_list.load_from(dct['saved_songs_list'])
 		self.album_contents_list.load_from(dct['album_contents_list'])
 		
 		self.name_changed()
-		self.saved_album_list.set_items_with_saved_albums(self.categorization_view.get())
+		self.update_saved_album_list()
+		self.update_saved_playlists_list()
+		self.update_saved_songs_list()
 	
 	def update_saved_album_list(self):
 		self.saved_album_list.set_items_with_saved_albums(self.categorization_view.get())
+
+	def update_saved_playlists_list(self):
+		self.saved_playlists_list.set_items_with_saved_playlists(self.categorization_view.get())
+		
+	def update_saved_songs_list(self):
+		self.saved_songs_list.set_items_with_saved_songs(self.categorization_view.get())
 		
 	def play(self, album):
 		spotify_wrapper.shuffle(False)
@@ -122,43 +168,59 @@ class Editor:
 	def uri_categorized(self, uri):
 		self.name_changed()
 		if self.categorization_edit.get():
-			spotify_wrapper.add_categorized_album(uri)
+			spotify_wrapper.add_categorized_uri(uri)
 			self.update_saved_album_list()
+			self.update_saved_playlists_list()
+			self.update_saved_songs_list()
 	
-	def album_uncategorized(self, album):
+	def uri_uncategorized(self, uri):
 		self.name_changed()
 		if self.categorization_edit.get():
-			spotify_wrapper.remove_categorized_album(album)
+			spotify_wrapper.remove_categorized_uri(uri)
 			self.update_saved_album_list()
+			self.update_saved_playlists_list()
+			self.update_saved_songs_list()
 	
-	def remove_album_from_list(self, album):
-		Utils.remove_line_from_file(self.get_current_path(), album['lineNumber'])
-		self.album_uncategorized(album)
+	def remove_item_from_list(self, item):
+		Utils.remove_line_from_file(self.get_current_path(), item['lineNumber'])
+		self.uri_uncategorized(item['uri'])
 	
 	def remove_saved_album(self, album):
 		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved albums on Spotify?' % album['name'])
 		if result:
 			spotify_wrapper.remove_saved_album(album['uri'])
 			self.update_saved_album_list()
-
-	def copy_album(self, album):
-		Utils.add_line_to_file(self.get_target_path(), album['uri'])
-		self.uri_categorized(album['uri'])
 	
-	def move_album_up(self, album):
-		Utils.remove_line_down(self.get_current_path(), album['lineNumber'] - 1)
+	def remove_saved_playlist(self, playlist):
+		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved playlists on Spotify?' % playlist['name'])
+		if result:
+			spotify_wrapper.remove_saved_playlist(playlist['uri'])
+			self.update_saved_playlists_list()
+	
+	def remove_saved_song(self, song):
+		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved songs on Spotify?' % song['name'])
+		if result:
+			spotify_wrapper.remove_saved_song(song['uri'])
+			self.update_saved_songs_list()
+
+	def copy_item(self, item):
+		Utils.add_line_to_file(self.get_target_path(), item['uri'])
+		self.uri_categorized(item['uri'])
+	
+	def move_item_up(self, item):
+		Utils.remove_line_down(self.get_current_path(), item['lineNumber'] - 1)
 		self.name_changed()
 	
-	def move_album_down(self, album):
-		Utils.remove_line_down(self.get_current_path(), album['lineNumber'])
+	def move_item_down(self, item):
+		Utils.remove_line_down(self.get_current_path(), item['lineNumber'])
 		self.name_changed()
 	
 	def add_uri(self, uri):
 		Utils.add_line_to_file(self.get_current_path(), uri)
 		self.uri_categorized(uri)
 
-	def add_album(self, album):
-		self.add_uri(album['uri'])
+	def add_item(self, item):
+		self.add_uri(item['uri'])
 	
 	def open_album(self, album):
 		if SpotifyWrapper.is_arkhes_playlist(album['uri']):
@@ -168,7 +230,7 @@ class Editor:
 			self.album_contents_uri_name_entry.set(album['uri'])
 
 	def open_album_contents_uri(self, *_):
-		self.notebook.select(1)
+		self.notebook.select(3)
 		uri = self.album_contents_uri_name_entry.get()
 		album = spotify_wrapper.get_resource(uri)
 		if len(album) == 0:
@@ -186,13 +248,25 @@ class Editor:
 	def clear_cache(self):
 		spotify_wrapper.clear_cache()
 		self.update_saved_album_list()
+		self.update_saved_playlists_list()
+		self.update_saved_songs_list()
 	
 	def update_saved_albums(self):
-		spotify_wrapper.reload_saved_album_cache()
+		spotify_wrapper.reload_saved_albums_cache()
 		self.update_saved_album_list()
+
+	def update_saved_playlists(self):
+		spotify_wrapper.reload_saved_playlists_cache()
+		self.update_saved_playlists_list()
+
+	def update_saved_songs(self):
+		spotify_wrapper.reload_saved_songs_cache()
+		self.update_saved_songs_list()
 
 	def changed_categorization_view(self, *_):
 		self.update_saved_album_list()
+		self.update_saved_playlists_list()
+		self.update_saved_songs_list()
 
 
 	def get_current_path(self):
