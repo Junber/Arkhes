@@ -1,4 +1,5 @@
 import json, requests
+import os
 from pathlib import Path
 from PIL import ImageTk, Image
 
@@ -13,6 +14,8 @@ class SpotifyWrapper:
 	scope = 'user-library-read user-modify-playback-state user-read-playback-state user-library-modify'
 
 	cache_file_name = 'cache.json'
+
+	cover_cache_location = 'cover_cache'
 
 	def __init__(self) -> None:
 		self.spotify = spotipy.Spotify(auth_manager=SpotifyPKCE(scope=self.scope, client_id='17c952718daa4eaebc2ccf096036a42f',
@@ -144,9 +147,11 @@ class SpotifyWrapper:
 
 	def cache_albums(self, uris):
 		if len(uris) > 0:
-			new_albums = self.spotify.albums(uris)
-			for uri, album in zip(uris, new_albums['albums']):
-				self.resource_cache[uri] = album
+			STEP_SIZE = 10 # TODO: Fine-tune value; do the same procedure for songs
+			for offset in range(0, len(uris), STEP_SIZE):
+				new_albums = self.spotify.albums(uris[offset : offset + STEP_SIZE])
+				for uri, album in zip(uris, new_albums['albums']):
+					self.resource_cache[uri] = album
 
 	def cache_songs(self, uris):
 		if len(uris) > 0:
@@ -267,7 +272,7 @@ class SpotifyWrapper:
 		return self.spotify.current_playback()
 	
 	def get_album_cover(self, album, size):
-		path = 'cover_cache/%s.jpg' % album['id']
+		path = os.path.join(self.cover_cache_location, album['id'] + '.jpg')
 
 		if not Path(path).is_file():
 			url = album['images'][0]['url']

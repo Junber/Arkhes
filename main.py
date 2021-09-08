@@ -1,7 +1,9 @@
+import os
 from tkinter import N, W, S, E, ttk
 import tkinter
 from pathlib import Path
 import json
+from utils import Utils
 
 from spotifyWrapper import spotify_wrapper
 from editor import Editor
@@ -12,6 +14,9 @@ class Window:
 	save_file_name = 'save.json'
 
 	def __init__(self):
+		os.makedirs(Utils.playlist_location, exist_ok=True)
+		os.makedirs(spotify_wrapper.cover_cache_location, exist_ok=True)
+		
 		self.root = tkinter.Tk()
 		self.root.title('Arkhes')
 		self.root.protocol('WM_DELETE_WINDOW', self.close)

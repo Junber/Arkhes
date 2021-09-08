@@ -4,6 +4,12 @@ A tool for creating and playing hierarchical spotify playlists
 
 WIP
 
+Dependencies:
+
+- spotipy
+- pillow
+- (googleapi)
+
 ## Planned:
 - [ ] Open album contents in player as well
 - [ ] Handle large playbacks better

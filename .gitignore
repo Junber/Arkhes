@@ -126,13 +126,8 @@ dmypy.json
 .vscode/
 
 cover_cache/
-
 playlists/
 
 *.bat
-
-save.json
-
-cache.json
-
 *.sh
+*.json

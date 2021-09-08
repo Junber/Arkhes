@@ -1,6 +1,9 @@
 import itertools
+import os
 
 class Utils:
+	playlist_location = 'playlists'
+
 	def get_lines_from_file(filename):
 		try:
 			with open(filename) as f:
@@ -51,7 +54,7 @@ class Utils:
 				line_number += 1
 		
 	def path_for(name):
-		return 'playlists/' + name + '.txt'
+		return os.path.join(Utils.playlist_location, name + '.txt')
 
 	def flatten(uris):
 		return list(itertools.chain.from_iterable(uris))
