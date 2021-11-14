@@ -7,7 +7,7 @@ from tkinter import N, W, S, E, ttk
 
 from tooltip import CreateToolTip
 from spotifyWrapper import spotify_wrapper
-from utils import Utils
+from arkhesPlaylists import ArkhesPlaylists
 
 class AlbumList:
 	name_length = 50
@@ -61,21 +61,6 @@ class AlbumList:
 
 	def grid(self, **args):
 		self.outer_frame.grid(args)
-	
-	def get_album(self, i, resource):
-		album = spotify_wrapper.get_resource(resource)
-		
-		album['playlistLine'] = resource
-		album['lineNumber'] = i
-		return album
-	
-	def get_albums_from_file(self, filename):
-		lines = Utils.get_lines_from_file(filename)
-		
-		spotify_wrapper.cache_uncached_albums(lines)
-		uris = [self.get_album(i, line) for i, line in enumerate(lines)]
-
-		return uris
 	
 	def change_page(self, diff):
 		self.page += diff
@@ -150,11 +135,8 @@ class AlbumList:
 		self.items = items
 		self.change_page(0)
 	
-	def set_items_with_path(self, path):
-		if Path(path).is_file():
-	 		self.set_items(self.get_albums_from_file(path))
-		else:
-			self.set_items([])
+	def set_items_with_path(self, name):
+		self.set_items(ArkhesPlaylists.get_playlist(name))
 	
 	def set_items_with_saved_albums(self, categorization_mode):
 		self.set_items(spotify_wrapper.saved_albums(categorization_mode))
@@ -164,6 +146,9 @@ class AlbumList:
 
 	def set_items_with_saved_songs(self, categorization_mode):
 		self.set_items(spotify_wrapper.saved_songs(categorization_mode))
+
+	def set_items_with_saved_artists(self, categorization_mode):
+		self.set_items(spotify_wrapper.saved_artists(categorization_mode))
 	
 	def max_items_per_page_changed(self, *_):
 		self.change_page(0)

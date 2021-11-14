@@ -1,6 +1,5 @@
 from tkinter import ttk
 import tkinter
-from utils import Utils
 
 class PlaylistNameEntry:
 	def __init__(self, root, changed_callback):
@@ -21,6 +20,3 @@ class PlaylistNameEntry:
 		
 	def get(self):
 		return self.playlist_name.get()
-
-	def get_path(self):
-		return Utils.path_for(self.get())

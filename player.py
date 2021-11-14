@@ -1,10 +1,12 @@
+from functools import reduce
+import itertools
 import random
 
 from tkinter import N, W, S, E, ttk
 import tkinter
 
 from spotifyWrapper import SpotifyWrapper, spotify_wrapper
-from utils import Utils
+from arkhesPlaylists import ArkhesPlaylists
 from albumList import AlbumList
 from currentPlaylistFrame import CurrentPlaylistFrame
 from currentPlaybackFrame import CurrentPlaybackFrame
@@ -70,8 +72,7 @@ class Player:
 				random.shuffle(uris)
 			uris = [uris]
 		elif SpotifyWrapper.is_arkhes_playlist(resource):
-			path = Utils.path_for(resource[len(spotify_wrapper.prefix):].strip())
-			uris = self.get_uris_from_file(path)
+			uris = self.get_playlist(resource[len(spotify_wrapper.prefix):].strip())
 		elif SpotifyWrapper.is_song(resource):
 			uris = [[resource]]
 		elif SpotifyWrapper.is_spotify_playlist(resource):
@@ -80,16 +81,20 @@ class Player:
 			if not self.album_shuffle.get() and self.track_shuffle.get():
 				random.shuffle(uris)
 			uris = [uris]
+		elif SpotifyWrapper.is_artist(resource):
+			albums = spotify_wrapper.get_resource(resource)['albums']
+			uris = [uri_list for album in albums for uri_list in self.get_uris(album['uri'])]
 		
 		return uris
 	
-	def get_uris_from_file(self, filename):
-		lines = Utils.get_lines_from_file(filename)		
-		spotify_wrapper.cache_uncached_albums(lines)
-		return Utils.flatten([self.get_uris(line) for line in lines])
+	def flatten(uris):
+		return list(itertools.chain.from_iterable(uris))
+	
+	def get_playlist(self, playlist):
+		return self.flatten(ArkhesPlaylists.get_playlist(playlist))
 
-	def get_uris_from_file_and_shuffle(self, filename):
-		uris = self.get_uris_from_file(filename)
+	def get_playlist_and_shuffle(self, playlist):
+		uris = self.get_playlist(playlist)
 
 		if self.album_shuffle.get() and not self.track_shuffle.get():
 			random.shuffle(uris)
@@ -97,18 +102,18 @@ class Player:
 		return uris
 	
 	def flatten_uris(self, uris):
-		uris = Utils.flatten(uris)
+		uris = self.flatten(uris)
 
 		if self.album_shuffle.get() and self.track_shuffle.get():
 			random.shuffle(uris)
 		
 		return uris
 	
-	def get_path(self):
-		return self.current_playlist_frame.name_entry.get_path()
+	def get_name(self):
+		return self.current_playlist_frame.name_entry.get()
 	
 	def play(self, *_):
-		self.current_playback = self.get_uris_from_file_and_shuffle(self.get_path())
+		self.current_playback = self.get_playlist_and_shuffle(self.get_name())
 		self.current_playback_album_position = 0
 		self.current_playback_track_position = 0
 		uris = self.flatten_uris(self.current_playback)
@@ -124,7 +129,7 @@ class Player:
 			spotify_wrapper.play(album['uri'])
 
 	def name_changed(self, *_):
-		self.album_list.set_items_with_path(self.get_path())
+		self.album_list.set_items_with_path(self.get_name())
 	
 	def changed_shuffle(self, *_):
 		self.current_playback_frame.set_album_navigation_enabled(not (self.album_shuffle.get() and self.track_shuffle.get()))

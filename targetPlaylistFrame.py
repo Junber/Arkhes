@@ -3,7 +3,7 @@ import os
 
 from tkinter import N, W, S, E, ttk, messagebox
 
-from utils import Utils
+from arkhesPlaylists import ArkhesPlaylists
 from playlistNameEntry import PlaylistNameEntry
 from spotifyWrapper import spotify_wrapper
 
@@ -25,12 +25,10 @@ class TargetPlaylistFrame:
 		self.frame.grid(args)
 	
 	def add_playlist(self):
-		Utils.add_line_to_file(self.editor.get_current_path(), spotify_wrapper.resource_type + ':' + self.name_entry.get())		
+		item = spotify_wrapper.get_resource(spotify_wrapper.resource_type + ':' + self.name_entry.get())
+		ArkhesPlaylists.add_item_to_playlist(self.editor.get_current_name(), item)
 		self.editor.name_changed()
 	
 	def rename_playlist(self):
-		if Path(self.name_entry.get_path()).is_file():
-			messagebox.showinfo(message='Playlist already exists')
-		else:
-			os.rename(self.editor.get_current_path(), self.name_entry.get_path())
-			self.editor.name_changed()
+		ArkhesPlaylists(self.editor.get_current_name(), self.name_entry.get())
+		self.editor.name_changed()

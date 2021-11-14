@@ -1,6 +1,5 @@
 from tkinter import N, W, S, E, ttk, messagebox
 
-from utils import Utils
 from playlistNameEntry import PlaylistNameEntry
 from spotifyWrapper import spotify_wrapper
 

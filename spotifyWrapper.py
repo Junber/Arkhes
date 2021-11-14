@@ -11,17 +11,18 @@ class SpotifyWrapper:
 	prefix = 'arkhes:'
 	resource_type = 'arkhes'
 
-	scope = 'user-library-read user-modify-playback-state user-read-playback-state user-library-modify'
+	scope = 'user-library-read user-modify-playback-state user-read-playback-state user-library-modify user-follow-read user-follow-modify user-read-private'
 
 	cache_file_name = 'cache.json'
 
 	cover_cache_location = 'cover_cache'
 
-	def __init__(self) -> None:
+	def __init__(self):
 		self.spotify = spotipy.Spotify(auth_manager=SpotifyPKCE(scope=self.scope, client_id='17c952718daa4eaebc2ccf096036a42f',
 			redirect_uri='http://localhost:8080'))
 		
 		self.categorizations = {}
+		self.current_country_code = self.spotify.me()['country']
 		self.load_cache()
 	
 	def add_categorized_uri(self, uri):
@@ -30,6 +31,7 @@ class SpotifyWrapper:
 			self.set_uncategorized_albums()
 			self.set_uncategorized_playlists()
 			self.set_uncategorized_songs()
+			self.set_uncategorized_artists()
 		else:
 			self.categorizations[uri] += 1
 	
@@ -41,6 +43,7 @@ class SpotifyWrapper:
 				self.set_uncategorized_albums()
 				self.set_uncategorized_playlists()
 				self.set_uncategorized_songs()
+				self.set_uncategorized_artists()
 	
 	def set_uncategorized_albums(self):
 		self.uncategorized_albums = [album for album in self.saved_albums_cache if album['uri'] not in self.categorizations]
@@ -50,6 +53,9 @@ class SpotifyWrapper:
 
 	def set_uncategorized_songs(self):
 		self.uncategorized_songs = [song for song in self.saved_songs_cache if song['uri'] not in self.categorizations]
+
+	def set_uncategorized_artists(self):
+		self.uncategorized_artists = [artist for artist in self.saved_artists_cache if artist['uri'] not in self.categorizations]
 
 	def load_saved_albums(self):
 		while True:
@@ -65,7 +71,7 @@ class SpotifyWrapper:
 			new_playlists = self.spotify.current_user_playlists(limit=50, offset=len(self.saved_playlists_cache))['items']
 			if len(new_playlists) == 0:
 				break
-			self.saved_playlists_cache.extend([playlist for playlist in new_playlists])
+			self.saved_playlists_cache.extend(new_playlists)
 
 		self.set_uncategorized_playlists()
 
@@ -77,6 +83,20 @@ class SpotifyWrapper:
 			self.saved_songs_cache.extend([song['track'] for song in new_songs])
 
 		self.set_uncategorized_songs()
+
+	def load_saved_artists(self):
+		while True:
+			last_artist = None
+			if len(self.saved_artists_cache) > 0:
+				last_artist = self.saved_artists_cache[-1]
+			
+			new_artists = self.spotify.current_user_followed_artists(limit=50, after=last_artist)['artists']['items']
+
+			if len(new_artists) == 0:
+				break
+			self.saved_artists_cache.extend(new_artists)
+
+		self.set_uncategorized_artists()
 		
 	def save_dict(self):
 		return {'categorizations' : self.categorizations}
@@ -86,11 +106,13 @@ class SpotifyWrapper:
 		self.set_uncategorized_albums()
 		self.set_uncategorized_playlists()
 		self.set_uncategorized_songs()
+		self.set_uncategorized_artists()
 
 	def load_cache(self):
 		self.saved_albums_cache = []
 		self.saved_playlists_cache = []
 		self.saved_songs_cache = []
+		self.saved_artists_cache = []
 		self.resource_cache = {}
 
 		if Path(self.cache_file_name).is_file():
@@ -101,13 +123,16 @@ class SpotifyWrapper:
 			self.saved_albums_cache = dct['saved_albums_cache']
 			self.saved_playlists_cache = dct['saved_playlists_cache']
 			self.saved_songs_cache = dct['saved_songs_cache']
+			self.saved_artists_cache = dct['saved_artists_cache']
 			self.set_uncategorized_albums()
 			self.set_uncategorized_playlists()
 			self.set_uncategorized_songs()
+			self.set_uncategorized_artists()
 		else:
 			self.load_saved_albums()
 			self.load_saved_playlists()
 			self.load_saved_songs()
+			self.load_saved_artists()
 	
 	def save_cache(self):
 		with open(self.cache_file_name, 'w') as f:
@@ -116,6 +141,7 @@ class SpotifyWrapper:
 				'saved_albums_cache' : self.saved_albums_cache,
 				'saved_playlists_cache' : self.saved_playlists_cache,
 				'saved_songs_cache' : self.saved_songs_cache,
+				'saved_artists_cache' : self.saved_artists_cache,
 				}))
 	
 	def reload_saved_albums_cache(self):
@@ -130,10 +156,15 @@ class SpotifyWrapper:
 		self.saved_songs_cache = []
 		self.load_saved_songs()
 
+	def reload_saved_artists_cache(self):
+		self.saved_artists_cache = []
+		self.load_saved_artists()
+
 	def clear_cache(self):
 		self.reload_saved_albums_cache()
 		self.reload_saved_playlists_cache()
 		self.reload_saved_songs_cache()
+		self.reload_saved_artists_cache()
 		self.resource_cache = {}
 
 
@@ -147,10 +178,10 @@ class SpotifyWrapper:
 
 	def cache_albums(self, uris):
 		if len(uris) > 0:
-			STEP_SIZE = 10 # TODO: Fine-tune value; do the same procedure for songs
+			STEP_SIZE = 10 # TODO: Fine-tune value; do the same procedure for songs, etc
 			for offset in range(0, len(uris), STEP_SIZE):
 				new_albums = self.spotify.albums(uris[offset : offset + STEP_SIZE])
-				for uri, album in zip(uris, new_albums['albums']):
+				for uri, album in zip(uris[offset : offset + STEP_SIZE], new_albums['albums']):
 					self.resource_cache[uri] = album
 
 	def cache_songs(self, uris):
@@ -158,6 +189,19 @@ class SpotifyWrapper:
 			new_songs = self.spotify.tracks(uris)
 			for uri, song in zip(uris, new_songs['tracks']):
 				self.resource_cache[uri] = song
+
+	def cache_artists(self, uris):
+		if len(uris) > 0:
+			for uri in uris:
+				artist = self.spotify.artist(uri)
+				albums = []
+				while True:
+					new_albums = self.spotify.artist_albums(uri, country=self.current_country(), limit=50, offset=len(albums))['items']
+					if len(new_albums) == 0:
+						break
+					albums.extend(new_albums)
+				artist['albums'] = albums
+				self.resource_cache[uri] = artist
 
 	def cache_spotify_playlists(self, uris):
 		if len(uris) > 0:
@@ -174,12 +218,19 @@ class SpotifyWrapper:
 		return uri.startswith('https://open.spotify.com/track/') or uri.startswith('spotify:track')
 
 	@staticmethod
+	def is_artist(uri):
+		return uri.startswith('https://open.spotify.com/artist/') or uri.startswith('spotify:artist')
+
+	@staticmethod
 	def is_spotify_playlist(uri):
 		return uri.startswith('https://open.spotify.com/playlist/') or uri.startswith('spotify:playlist')
 
 	@staticmethod
 	def is_arkhes_playlist(uri):
 		return uri.startswith(SpotifyWrapper.prefix)
+	
+	def current_country(self): # TODO: Use more often or never probably
+		return self.current_country_code
 
 	def cache_uncached_albums(self, uris):  # TODO: Also do that for playlists, songs, etc
 		uncached = []
@@ -194,6 +245,8 @@ class SpotifyWrapper:
 				self.cache_albums([uri])
 			elif self.is_song(uri):
 				self.cache_songs([uri])
+			elif self.is_artist(uri):
+				self.cache_artists([uri])
 			elif self.is_spotify_playlist(uri):
 				self.cache_spotify_playlists([uri])
 			elif self.is_arkhes_playlist(uri):
@@ -237,12 +290,18 @@ class SpotifyWrapper:
 			return self.uncategorized_songs
 		else:
 			return self.saved_songs_cache
+
+	def saved_artists(self, categorization_mode):
+		if categorization_mode:
+			return self.uncategorized_artists
+		else:
+			return self.saved_artists_cache
 	
 	def shuffle(self, shouldShuffle):
 		self.spotify.shuffle(shouldShuffle, device_id=self.get_device_id())
 	
 	def play(self, uri):
-		if SpotifyWrapper.is_album(uri) or SpotifyWrapper.is_spotify_playlist(uri):
+		if SpotifyWrapper.is_album(uri) or SpotifyWrapper.is_spotify_playlist(uri) or SpotifyWrapper.is_artist(uri):
 			self.spotify.start_playback(context_uri=uri, device_id=self.get_device_id())
 		else:
 			self.play_uris([uri])
@@ -267,6 +326,11 @@ class SpotifyWrapper:
 		self.spotify.current_user_unfollow_playlist(self.get_resource(uri)['name'])
 		self.saved_songs_cache = [i for i in self.saved_songs_cache if i['uri'] != uri]
 		self.uncategorized_songs = [i for i in self.uncategorized_songs if i['uri'] != uri]
+
+	def remove_saved_artist(self, uri):
+		self.spotify.user_unfollow_artists(self.get_resource(uri)['name'])
+		self.saved_artists_cache = [i for i in self.saved_artists_cache if i['uri'] != uri]
+		self.uncategorized_artists = [i for i in self.uncategorized_artists if i['uri'] != uri]
 	
 	def get_current_playback(self):
 		return self.spotify.current_playback()
