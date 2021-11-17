@@ -26,4 +26,5 @@ Dependencies:
 - [ ] More functionality for content view/album list (add all, filter out same names, sort, search)
 - [ ] See current playback in edit section
 - [ ] Show more information (release date, genres, etc)
+- [ ] Filter by rating
 - [ ] Refactoring

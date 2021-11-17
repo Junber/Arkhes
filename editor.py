@@ -26,12 +26,6 @@ class Editor:
 		
 		self.settings_frame = ttk.Labelframe(self.left_frame, text='Settings', padding='5 5 5 5')
 		self.settings_frame.grid(column=0, row=4, sticky=(S, W, E))
-		ttk.Label(self.settings_frame, text='Update', width=0).grid(column=0, row=0, sticky=(S, N, W, E))
-		ttk.Button(self.settings_frame, text='Cache', command=self.clear_cache, width=0).grid(column=1, row=0, sticky=(S, N, W, E))
-		ttk.Button(self.settings_frame, text='Albums', command=self.update_saved_albums, width=0).grid(column=2, row=0, sticky=(S, N, W, E))
-		ttk.Button(self.settings_frame, text='Playlists', command=self.update_saved_playlists, width=0).grid(column=3, row=0, sticky=(S, N, W, E))
-		ttk.Button(self.settings_frame, text='Songs', command=self.update_saved_songs, width=0).grid(column=4, row=0, sticky=(S, N, W, E))
-		ttk.Button(self.settings_frame, text='Artists', command=self.update_saved_artists, width=0).grid(column=5, row=0, sticky=(S, N, W, E))
 		self.categorization_edit = tkinter.BooleanVar(value=True)
 		ttk.Checkbutton(self.settings_frame, text='Edit categorization state', variable=self.categorization_edit).grid(column=0, columnspan=6, row=1, sticky=(S, N, W, E))
 		self.categorization_view = tkinter.BooleanVar(value=True)
@@ -258,29 +252,6 @@ class Editor:
 
 	def name_changed(self):
 		self.album_list.set_items_with_path(self.get_current_name())
-
-	def clear_cache(self):
-		spotify_wrapper.clear_cache()
-		self.update_saved_album_list()
-		self.update_saved_playlists_list()
-		self.update_saved_songs_list()
-		self.update_saved_artists_list()
-	
-	def update_saved_albums(self):
-		spotify_wrapper.reload_saved_albums_cache()
-		self.update_saved_album_list()
-
-	def update_saved_playlists(self):
-		spotify_wrapper.reload_saved_playlists_cache()
-		self.update_saved_playlists_list()
-
-	def update_saved_songs(self):
-		spotify_wrapper.reload_saved_songs_cache()
-		self.update_saved_songs_list()
-
-	def update_saved_artists(self):
-		spotify_wrapper.reload_saved_artists_cache()
-		self.update_saved_artists_list()
 
 	def changed_categorization_view(self, *_):
 		self.update_saved_album_list()

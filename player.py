@@ -12,7 +12,7 @@ from currentPlaylistFrame import CurrentPlaylistFrame
 from currentPlaybackFrame import CurrentPlaybackFrame
 
 class Player:
-	def __init__(self, root):
+	def __init__(self, root: ttk.Widget):
 		self.current_playback = []
 		self.current_playback_album_position = 0
 		self.current_playback_track_position = 0
