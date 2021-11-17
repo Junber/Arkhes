@@ -1,5 +1,4 @@
 from math import ceil
-from pathlib import Path
 from functools import partial
 
 import tkinter
@@ -9,7 +8,7 @@ from tooltip import CreateToolTip
 from spotifyWrapper import spotify_wrapper
 from arkhesPlaylists import ArkhesPlaylists
 
-class AlbumList:
+class AlbumList: # TODO: Rename
 	name_length = 50
 
 	def __init__(self, parent, owner, title, default_item_number, album_clicked_callback, extra_callbacks=[], enabled_lambda=None) -> None:
@@ -111,7 +110,10 @@ class AlbumList:
 			self.enabled_lambda is not None and not self.enabled_lambda(album, albumNum))
 
 		for extraButtonIndex, extra in enumerate(self.extra_callbacks):
-			self.add_button(album, extraButtonIndex + 1, y, extra[0], len(extra[0]) + 2,
+			text = extra[0]
+			if not isinstance(text, str):
+				text = text(album, albumNum)
+			self.add_button(album, extraButtonIndex + 1, y, text, len(text) + 2,
 				partial(extra[1], album),
 				len(extra) > 2 and not extra[2](album, albumNum))
 	

@@ -1,5 +1,5 @@
 import tkinter
-from tkinter import N, W, S, E, ttk, messagebox
+from tkinter import N, W, S, E, ttk, messagebox, simpledialog
 
 from currentPlaylistFrame import CurrentPlaylistFrame
 from targetPlaylistFrame import TargetPlaylistFrame
@@ -11,7 +11,7 @@ from spotifyWrapper import SpotifyWrapper, spotify_wrapper
 from arkhesPlaylists import ArkhesPlaylists
 
 class Editor:
-	def __init__(self, root):
+	def __init__(self, root: ttk.Widget):
 		self.left_frame = ttk.Frame(root)
 		self.left_frame.grid(column=0, row=0, rowspan=2, sticky=(N, S, W, E))
 
@@ -40,59 +40,26 @@ class Editor:
 
 		self.album_list = AlbumList(root, self, 'Contents', 24, self.open_item,
 			[
+				[lambda item, _: str(item['rating']), self.set_rating],
 				["Play", self.play],
 				["Copy", self.copy_item],
 				["↑", self.move_item_up, lambda album, _: album['lineNumber'] > 0],
 				["↓", self.move_item_down, lambda album, albumNum: album['lineNumber'] < albumNum-1],
 				["X", self.remove_item_from_list]
 			],
-			lambda album, _: not SpotifyWrapper.is_song(album['uri']))
+			lambda item, _: not SpotifyWrapper.is_song(item['uri']))
 		self.album_list.grid(column=1, row=0, rowspan=2, sticky=(N, W, E, S))
 
 		self.notebook = ttk.Notebook(root)
-		self.saved_albums_frame = ttk.Frame(self.notebook, padding='4 5 4 5')
-		self.saved_playlists_frame = ttk.Frame(self.notebook, padding='4 5 4 5')
-		self.saved_songs_frame = ttk.Frame(self.notebook, padding='4 5 4 5')
-		self.saved_artists_frame = ttk.Frame(self.notebook, padding='4 5 4 5')
+
+		self.saved_album_list = self.add_saved_frame('Saved Albums', self.remove_saved_album)
+		self.saved_playlists_list = self.add_saved_frame('Saved Playlists', self.remove_saved_playlist)
+		self.saved_songs_list = self.add_saved_frame('Saved Songs', self.remove_saved_song)
+		self.saved_artists_list = self.add_saved_frame('Saved Artists', self.remove_saved_artist)
+
 		self.album_contents_frame = ttk.Frame(self.notebook, padding='4 5 4 5')
-		self.notebook.add(self.saved_albums_frame, text='Saved Albums')
-		self.notebook.add(self.saved_playlists_frame, text='Saved Playlists')
-		self.notebook.add(self.saved_songs_frame, text='Saved Songs')
-		self.notebook.add(self.saved_artists_frame, text='Saved Artists')
 		self.notebook.add(self.album_contents_frame, text='Contents')
 		self.notebook.grid(column=2, row=0, columnspan=3, sticky=(N, W, E, S))
-
-		self.saved_album_list = AlbumList(self.saved_albums_frame, self, '', 24, self.open_item, 
-			[
-				["Play", self.play],
-				["Add", self.add_item],
-				["X", self.remove_saved_album]
-			])
-		self.saved_album_list.grid(column=0, row=0, sticky=(N, W, E, S))
-
-		self.saved_playlists_list = AlbumList(self.saved_playlists_frame, self, '', 24, self.open_item, 
-			[
-				["Play", self.play],
-				["Add", self.add_item],
-				["X", self.remove_saved_playlist]
-			])
-		self.saved_playlists_list.grid(column=0, row=0, sticky=(N, W, E, S))
-
-		self.saved_songs_list = AlbumList(self.saved_songs_frame, self, '', 24, self.open_item, 
-			[
-				["Play", self.play],
-				["Add", self.add_item],
-				["X", self.remove_saved_song]
-			], lambda *_: False)
-		self.saved_songs_list.grid(column=0, row=0, sticky=(N, W, E, S))
-
-		self.saved_artists_list = AlbumList(self.saved_artists_frame, self, '', 24, self.open_item, 
-			[
-				["Play", self.play],
-				["Add", self.add_item],
-				["X", self.remove_saved_artist]
-			])
-		self.saved_artists_list.grid(column=0, row=0, sticky=(N, W, E, S))
 
 		self.album_contents_uri_name_entry = PlaylistNameEntry(self.album_contents_frame, self.open_album_contents_uri)
 		self.album_contents_uri_name_entry.grid(column=0, row=0, sticky=(N, S, W, E))
@@ -120,14 +87,6 @@ class Editor:
 		self.left_frame.rowconfigure(3, weight=3)
 		self.left_frame.rowconfigure(4, weight=2)
 
-		self.saved_albums_frame.columnconfigure(0, weight=1)
-		self.saved_albums_frame.rowconfigure(0, weight=1)
-		self.saved_playlists_frame.columnconfigure(0, weight=1)
-		self.saved_playlists_frame.rowconfigure(0, weight=1)
-		self.saved_songs_frame.columnconfigure(0, weight=1)
-		self.saved_songs_frame.rowconfigure(0, weight=1)
-		self.saved_artists_frame.columnconfigure(0, weight=1)
-		self.saved_artists_frame.rowconfigure(0, weight=1)
 		self.album_contents_frame.columnconfigure(0, weight=1)
 		self.album_contents_frame.rowconfigure(1, weight=1)
 
@@ -136,6 +95,24 @@ class Editor:
 		self.update_saved_playlists_list()
 		self.update_saved_songs_list()
 		self.update_saved_artists_list()
+	
+	def add_saved_frame(self, name, removeFunction):
+		frame = ttk.Frame(self.notebook, padding='4 5 4 5')
+		self.notebook.add(frame, text=name)
+
+		saved_list = AlbumList(frame, self, '', 24, self.open_item, 
+			[
+				["Play", self.play],
+				["Add", self.add_item],
+				["X", removeFunction]
+			],
+			lambda item, _: not SpotifyWrapper.is_song(item['uri']))
+		saved_list.grid(column=0, row=0, sticky=(N, W, E, S))
+
+		frame.columnconfigure(0, weight=1)
+		frame.rowconfigure(0, weight=1)
+
+		return saved_list
 	
 	def save_dict(self):
 		return {
@@ -203,6 +180,13 @@ class Editor:
 			self.update_saved_songs_list()
 			self.update_saved_artists_list()
 	
+	def set_rating(self, item):
+		result = simpledialog.askinteger('Rating', 'Enter your new rating for this album.')
+		if result is not None:
+			item['rating'] = result
+			ArkhesPlaylists.update_item_in_playlist(self.get_current_name(), item)
+			self.name_changed()
+	
 	def remove_item_from_list(self, item):
 		ArkhesPlaylists.remove_item_from_playlist(self.get_current_name(), item)
 		self.uri_uncategorized(item['uri'])
@@ -236,15 +220,15 @@ class Editor:
 		self.uri_categorized(item['uri'])
 	
 	def move_item_up(self, item):
-		ArkhesPlaylists.move_item_up(self.get_target_name(), item)
+		ArkhesPlaylists.move_item_up(self.get_current_name(), item)
 		self.name_changed()
 	
 	def move_item_down(self, item):
-		ArkhesPlaylists.move_item_down(self.get_target_name(), item)
+		ArkhesPlaylists.move_item_down(self.get_current_name(), item)
 		self.name_changed()
 	
 	def add_uri(self, uri):
-		ArkhesPlaylists.add_item_to_playlist(self.get_target_name(), spotify_wrapper.get_resource(uri))
+		ArkhesPlaylists.add_item_to_playlist(self.get_current_name(), spotify_wrapper.get_resource(uri))
 		self.uri_categorized(uri)
 
 	def add_item(self, item):
