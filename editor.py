@@ -41,7 +41,7 @@ class Editor:
 				["↓", self.move_item_down, lambda album, albumNum: album['lineNumber'] < albumNum-1],
 				["X", self.remove_item_from_list]
 			],
-			lambda item, _: not SpotifyWrapper.is_song(item['uri']))
+			lambda item, _: not SpotifyWrapper.is_song_uri(item['uri']))
 		self.album_list.grid(column=1, row=0, rowspan=2, sticky=(N, W, E, S))
 
 		self.notebook = ttk.Notebook(root)
@@ -100,7 +100,7 @@ class Editor:
 				["Add", self.add_item],
 				["X", removeFunction]
 			],
-			lambda item, _: not SpotifyWrapper.is_song(item['uri']))
+			lambda item, _: not SpotifyWrapper.is_song_uri(item['uri']))
 		saved_list.grid(column=0, row=0, sticky=(N, W, E, S))
 
 		frame.columnconfigure(0, weight=1)
@@ -229,7 +229,7 @@ class Editor:
 		self.add_uri(item['uri'])
 	
 	def open_item(self, album):
-		if SpotifyWrapper.is_arkhes_playlist(album['uri']):
+		if SpotifyWrapper.is_arkhes_playlist_uri(album['uri']):
 			self.current_playlist_frame.save_current_position()
 			self.set_current_name(album['name'])
 		else:
@@ -241,11 +241,11 @@ class Editor:
 		resource = spotify_wrapper.get_resource(uri)
 		if len(resource) == 0:
 			self.album_contents_list.set_items([])
-		elif SpotifyWrapper.is_album(uri):
+		elif SpotifyWrapper.is_album_uri(uri):
 			self.album_contents_list.set_items(resource['tracks']['items'])
-		elif SpotifyWrapper.is_spotify_playlist(uri):
+		elif SpotifyWrapper.is_spotify_playlist_uri(uri):
 			self.album_contents_list.set_items([track['track'] for track in resource['tracks']['items']])
-		elif SpotifyWrapper.is_artist(uri):
+		elif SpotifyWrapper.is_artist_uri(uri):
 			self.album_contents_list.set_items(resource['albums'])
 		else:
 			self.album_contents_list.set_items([])

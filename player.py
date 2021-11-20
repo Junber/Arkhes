@@ -64,34 +64,36 @@ class Player:
 		self.name_changed()
 	
 	def get_uris(self, resource):
+		uri = resource['uri']
 		uris = []
-		if SpotifyWrapper.is_album(resource):
-			tracks = spotify_wrapper.get_resource(resource)['tracks']['items']
+		if SpotifyWrapper.is_album_uri(uri):
+			tracks = resource['tracks']['items']
 			uris = [track['uri'] for track in tracks]
 			if not self.album_shuffle.get() and self.track_shuffle.get():
 				random.shuffle(uris)
 			uris = [uris]
-		elif SpotifyWrapper.is_arkhes_playlist(resource):
-			uris = self.get_playlist(resource[len(spotify_wrapper.prefix):].strip())
-		elif SpotifyWrapper.is_song(resource):
-			uris = [[resource]]
-		elif SpotifyWrapper.is_spotify_playlist(resource):
-			tracks = spotify_wrapper.get_resource(resource)['tracks']['items']
+		elif SpotifyWrapper.is_arkhes_playlist_uri(uri):
+			uris = self.get_playlist(resource['name'])
+		elif SpotifyWrapper.is_song_uri(uri):
+			uris = [[uri]]
+		elif SpotifyWrapper.is_spotify_playlist_uri(uri):
+			tracks = resource['tracks']['items']
 			uris = [item['track']['uri'] for item in tracks]
 			if not self.album_shuffle.get() and self.track_shuffle.get():
 				random.shuffle(uris)
 			uris = [uris]
-		elif SpotifyWrapper.is_artist(resource):
-			albums = spotify_wrapper.get_resource(resource)['albums']
+		elif SpotifyWrapper.is_artist_uri(uri):
+			albums = resource['albums']
 			uris = [uri_list for album in albums for uri_list in self.get_uris(album['uri'])]
 		
 		return uris
 	
+	@staticmethod
 	def flatten(uris):
 		return list(itertools.chain.from_iterable(uris))
 	
 	def get_playlist(self, playlist):
-		return self.flatten(ArkhesPlaylists.get_playlist(playlist))
+		return Player.flatten([self.get_uris(line) for line in ArkhesPlaylists.get_playlist(playlist)])
 
 	def get_playlist_and_shuffle(self, playlist):
 		uris = self.get_playlist(playlist)
@@ -102,7 +104,7 @@ class Player:
 		return uris
 	
 	def flatten_uris(self, uris):
-		uris = self.flatten(uris)
+		uris = Player.flatten(uris)
 
 		if self.album_shuffle.get() and self.track_shuffle.get():
 			random.shuffle(uris)

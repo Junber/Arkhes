@@ -124,6 +124,7 @@ class AlbumList: # TODO: Rename
 	def destory_old_buttons(self):
 		for child in self.old_buttons:
 			child.destroy()
+		self.old_buttons.clear()
 	
 	def clear_buttons(self):
 		self.old_buttons = self.albums_frame.winfo_children()

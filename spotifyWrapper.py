@@ -210,23 +210,23 @@ class SpotifyWrapper:
 				self.resource_cache[uri] = playlist
 
 	@staticmethod
-	def is_album(uri):
+	def is_album_uri(uri):
 		return uri.startswith('https://open.spotify.com/album/') or uri.startswith('spotify:album')
 
 	@staticmethod
-	def is_song(uri):
+	def is_song_uri(uri):
 		return uri.startswith('https://open.spotify.com/track/') or uri.startswith('spotify:track')
 
 	@staticmethod
-	def is_artist(uri):
+	def is_artist_uri(uri):
 		return uri.startswith('https://open.spotify.com/artist/') or uri.startswith('spotify:artist')
 
 	@staticmethod
-	def is_spotify_playlist(uri):
+	def is_spotify_playlist_uri(uri):
 		return uri.startswith('https://open.spotify.com/playlist/') or uri.startswith('spotify:playlist')
 
 	@staticmethod
-	def is_arkhes_playlist(uri):
+	def is_arkhes_playlist_uri(uri):
 		return uri.startswith(SpotifyWrapper.prefix)
 	
 	def current_country(self): # TODO: Use more often or never probably
@@ -235,21 +235,21 @@ class SpotifyWrapper:
 	def cache_uncached_albums(self, uris):  # TODO: Also do that for playlists, songs, etc
 		uncached = []
 		for uri in uris:
-			if self.is_album(uri) and not uri in self.resource_cache:
+			if self.is_album_uri(uri) and not uri in self.resource_cache:
 				uncached.append(uri)
 		self.cache_albums(uncached)
 	
 	def get_resource(self, uri):
 		if not uri in self.resource_cache:
-			if self.is_album(uri):
+			if self.is_album_uri(uri):
 				self.cache_albums([uri])
-			elif self.is_song(uri):
+			elif self.is_song_uri(uri):
 				self.cache_songs([uri])
-			elif self.is_artist(uri):
+			elif self.is_artist_uri(uri):
 				self.cache_artists([uri])
-			elif self.is_spotify_playlist(uri):
+			elif self.is_spotify_playlist_uri(uri):
 				self.cache_spotify_playlists([uri])
-			elif self.is_arkhes_playlist(uri):
+			elif self.is_arkhes_playlist_uri(uri):
 				return {'name' : uri[len(self.prefix):].strip(), 'type' : self.resource_type, 'uri' : uri}
 			else:
 				return []
@@ -301,7 +301,7 @@ class SpotifyWrapper:
 		self.spotify.shuffle(shouldShuffle, device_id=self.get_device_id())
 	
 	def play(self, uri):
-		if SpotifyWrapper.is_album(uri) or SpotifyWrapper.is_spotify_playlist(uri) or SpotifyWrapper.is_artist(uri):
+		if SpotifyWrapper.is_album_uri(uri) or SpotifyWrapper.is_spotify_playlist_uri(uri) or SpotifyWrapper.is_artist_uri(uri):
 			self.spotify.start_playback(context_uri=uri, device_id=self.get_device_id())
 		else:
 			self.play_uris([uri])
