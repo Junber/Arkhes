@@ -6,7 +6,7 @@ from targetPlaylistFrame import TargetPlaylistFrame
 from uriFrame import UriFrame
 from addCurrentPlaybackFrame import AddCurrentPlaybackFrame
 from playlistNameEntry import PlaylistNameEntry
-from albumList import AlbumList
+from resourceList import ResourceList
 from spotifyWrapper import SpotifyWrapper, spotify_wrapper
 from arkhesPlaylists import ArkhesPlaylists
 
@@ -32,7 +32,7 @@ class Editor:
 		self.categorization_view.trace_add('write', self.changed_categorization_view)
 		ttk.Checkbutton(self.settings_frame, text='Show uncategorized items', variable=self.categorization_view).grid(column=0, columnspan=6, row=2, sticky=(S, N, W, E))
 
-		self.album_list = AlbumList(root, self, 'Contents', 24, self.open_item,
+		self.album_list = ResourceList(root, self, 'Contents', 24, self.open_item,
 			[
 				[lambda item, _: str(item['rating']), self.set_rating],
 				["Play", self.play],
@@ -57,7 +57,7 @@ class Editor:
 
 		self.album_contents_uri_name_entry = PlaylistNameEntry(self.album_contents_frame, self.open_album_contents_uri)
 		self.album_contents_uri_name_entry.grid(column=0, row=0, sticky=(N, S, W, E))
-		self.album_contents_list = AlbumList(self.album_contents_frame, self, '', 24, self.open_item,
+		self.album_contents_list = ResourceList(self.album_contents_frame, self, '', 24, self.open_item,
 			[
 				["Play", self.play],
 				["Add", self.add_item]
@@ -94,7 +94,7 @@ class Editor:
 		frame = ttk.Frame(self.notebook, padding='4 5 4 5')
 		self.notebook.add(frame, text=name)
 
-		saved_list = AlbumList(frame, self, '', 24, self.open_item, 
+		saved_list = ResourceList(frame, self, '', 24, self.open_item, 
 			[
 				["Play", self.play],
 				["Add", self.add_item],

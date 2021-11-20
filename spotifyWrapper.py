@@ -250,7 +250,7 @@ class SpotifyWrapper:
 			elif self.is_spotify_playlist_uri(uri):
 				self.cache_spotify_playlists([uri])
 			elif self.is_arkhes_playlist_uri(uri):
-				return {'name' : uri[len(self.prefix):].strip(), 'type' : self.resource_type, 'uri' : uri}
+				return {'name' : uri[len(self.prefix):].strip(), 'type' : self.resource_type, 'uri' : uri, 'release_date' : '0000-00-00', 'popularity' : 0}
 			else:
 				return []
 		return self.resource_cache[uri]

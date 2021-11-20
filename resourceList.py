@@ -3,53 +3,80 @@ from functools import partial
 
 import tkinter
 from tkinter import N, W, S, E, ttk
+from typing import Callable
 
 from tooltip import CreateToolTip
 from spotifyWrapper import spotify_wrapper
 from arkhesPlaylists import ArkhesPlaylists
 
-class AlbumList: # TODO: Rename
+class ResourceList:
 	name_length = 50
 
-	def __init__(self, parent, owner, title, default_item_number, album_clicked_callback, extra_callbacks=[], enabled_lambda=None) -> None:
+	def __init__(self, parent: ttk.Widget, owner, title: str, default_item_number: int, album_clicked_callback: Callable, extra_callbacks:list =[], enabled_lambda =None) -> None:
 		self.album_clicked_callback = album_clicked_callback
 		self.extra_callbacks = extra_callbacks
 		self.owner = owner
 		self.items = []
+		self.unsorted_items = []
 		self.enabled_lambda = enabled_lambda
 
+		self.default_sort_name = 'Default'
+		self.ascending_sort_name = 'Asc'
+		self.sorts = {'Release Date': 'release_date', 'Name' : 'name', 'Popularity' : 'popularity', 'Rating' : 'rating'}
+
 		self.build_frames(parent, title)
-		self.build_page_navigation(self.outer_frame, default_item_number)
+		self.build_sort(self.sort_frame)
+		self.build_page_navigation(self.navigation_frame, default_item_number)
 	
-	def build_frames(self, parent, title):
+	def build_frames(self, parent: ttk.Widget, title: str):
 		if len(title) == 0:
 			self.outer_frame = ttk.Frame(parent)
 		else:
 			self.outer_frame = ttk.Labelframe(parent, text=title, padding='4 5 4 5')
+
+		self.sort_frame = ttk.Frame(self.outer_frame, padding='0 0 0 5')
+		self.sort_frame.grid(column=0, row=0, sticky=(N, S, W, E))
 		self.albums_frame = ttk.Frame(self.outer_frame, padding='0 0 0 10')
-		self.albums_frame.grid(column=0, row=0, columnspan=4, sticky=(N, S, W, E))
+		self.albums_frame.grid(column=0, row=1, sticky=(N, S, W, E))
+		self.navigation_frame = ttk.Frame(self.outer_frame, padding='0 0 0 0')
+		self.navigation_frame.grid(column=0, row=2, sticky=(N, S, W, E))
 
 		self.albums_frame.columnconfigure(0, weight=1)
 		self.outer_frame.columnconfigure(0, weight=1)
-		self.outer_frame.columnconfigure(1, weight=1)
-		self.outer_frame.columnconfigure(2, weight=1)
-		self.outer_frame.rowconfigure(0, weight=1)
+		self.outer_frame.rowconfigure(1, weight=1)
 	
-	def build_page_navigation(self, parent, default_item_number):
+	def build_sort(self, parent: ttk.Widget):
+		ttk.Label(parent, text='Sort:').grid(column=0, row=0, sticky=(N, S, W, E))
+
+		self.current_sort = tkinter.StringVar(value=self.default_sort_name)
+		self.current_sort.trace_add('write', self.sort_changed)
+		self.sort_box = ttk.Combobox(parent, state="readonly", textvariable=self.current_sort, values=[self.default_sort_name] + [sort_name for sort_name in self.sorts])
+		self.sort_box.grid(column=1, row=0, sticky=(N, S, W, E))
+
+		self.current_sort_direction = tkinter.StringVar(value=self.ascending_sort_name)
+		self.current_sort_direction.trace_add('write', self.sort_changed)
+		self.sort_direction_box = ttk.Combobox(parent, state="readonly", textvariable=self.current_sort_direction, values=[self.ascending_sort_name, 'Desc'])
+		self.sort_direction_box.grid(column=2, row=0, sticky=(N, S, W, E))
+	
+	def build_page_navigation(self, parent: ttk.Widget, default_item_number: int):
 		self.page = 0
 		self.prev_button = ttk.Button(parent, text='Prev', command=lambda: self.change_page(-1))
-		self.prev_button.grid(column=0, row=1, sticky=(N, S, W, E))
+		self.prev_button.grid(column=0, row=0, sticky=(N, S, W, E))
 		self.page_string = tkinter.StringVar(value="[Page]")
 		self.page_label = ttk.Label(parent, textvariable=self.page_string, anchor='center')
-		self.page_label.grid(column=1, row=1, sticky=(N, S, W, E))
+		self.page_label.grid(column=1, row=0, sticky=(N, S, W, E))
 		self.next_button = ttk.Button(parent, text='Next', command=lambda: self.change_page(+1))
-		self.next_button.grid(column=2, row=1, sticky=(N, S, W, E))
+		self.next_button.grid(column=2, row=0, sticky=(N, S, W, E))
 
 		self.max_items_per_page_string = tkinter.StringVar(value=str(default_item_number))
 		self.max_items_per_page_string.trace_add('write', self.max_items_per_page_changed)
 		self.max_items_per_page_input = ttk.Entry(parent, width=3, textvariable=self.max_items_per_page_string)
-		self.max_items_per_page_input.grid(column=3, row=1, sticky=(N, S, W, E))
+		self.max_items_per_page_input.grid(column=3, row=0, sticky=(N, S, W, E))
 		CreateToolTip(self.max_items_per_page_input, "Number of items per page")
+
+		parent.columnconfigure(0, weight=1)
+		parent.columnconfigure(1, weight=1)
+		parent.columnconfigure(2, weight=1)
 	
 	def save_dict(self):
 		return {'page' : self.page, 'max_items_per_page' : self.max_items_per_page()}
@@ -134,8 +161,18 @@ class AlbumList: # TODO: Rename
 		self.clear_buttons()
 		self.add_buttons(albums)
 	
-	def set_items(self, items):
-		self.items = items
+	def perform_sort(self, items_to_be_sorted: list):
+		if self.current_sort.get() != self.default_sort_name:
+			items_to_be_sorted.sort(key = lambda x: x[self.sorts[self.current_sort.get()]],
+									reverse = (self.current_sort_direction.get() != self.ascending_sort_name))
+		elif self.current_sort_direction.get() != self.ascending_sort_name:
+			items_to_be_sorted.reverse()
+	
+	def set_items(self, items: list):
+		self.unsorted_items = items.copy()
+		self.items = items.copy()
+		self.perform_sort(self.items)
+
 		self.change_page(0)
 	
 	def set_items_with_path(self, name):
@@ -152,6 +189,9 @@ class AlbumList: # TODO: Rename
 
 	def set_items_with_saved_artists(self, categorization_mode):
 		self.set_items(spotify_wrapper.saved_artists(categorization_mode))
+	
+	def sort_changed(self, *_):
+		self.set_items(self.unsorted_items)
 	
 	def max_items_per_page_changed(self, *_):
 		self.change_page(0)
