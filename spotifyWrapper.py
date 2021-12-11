@@ -6,6 +6,7 @@ from PIL import ImageTk, Image
 import spotipy
 from spotipy.oauth2 import SpotifyPKCE
 
+from resource import ArkhesPlaylist, Resource, Album, SpotifyPlaylist, Song, Artist
 
 class SpotifyWrapper:
 	prefix = 'arkhes:'
@@ -46,23 +47,23 @@ class SpotifyWrapper:
 				self.set_uncategorized_artists()
 	
 	def set_uncategorized_albums(self):
-		self.uncategorized_albums = [album for album in self.saved_albums_cache if album['uri'] not in self.categorizations]
+		self.uncategorized_albums = [album for album in self.saved_albums_cache if album.get_uri() not in self.categorizations]
 
 	def set_uncategorized_playlists(self):
-		self.uncategorized_playlists = [playlist for playlist in self.saved_playlists_cache if playlist['uri'] not in self.categorizations]
+		self.uncategorized_playlists = [playlist for playlist in self.saved_playlists_cache if playlist.get_uri() not in self.categorizations]
 
 	def set_uncategorized_songs(self):
-		self.uncategorized_songs = [song for song in self.saved_songs_cache if song['uri'] not in self.categorizations]
+		self.uncategorized_songs = [song for song in self.saved_songs_cache if song.get_uri() not in self.categorizations]
 
 	def set_uncategorized_artists(self):
-		self.uncategorized_artists = [artist for artist in self.saved_artists_cache if artist['uri'] not in self.categorizations]
+		self.uncategorized_artists = [artist for artist in self.saved_artists_cache if artist.get_uri() not in self.categorizations]
 
 	def load_saved_albums(self):
 		while True:
 			new_albums = self.spotify.current_user_saved_albums(limit=50, offset=len(self.saved_albums_cache))['items']
 			if len(new_albums) == 0:
 				break
-			self.saved_albums_cache.extend([album['album'] for album in new_albums])
+			self.saved_albums_cache.extend([Album(album['album']) for album in new_albums])
 		
 		self.set_uncategorized_albums()
 
@@ -71,7 +72,7 @@ class SpotifyWrapper:
 			new_playlists = self.spotify.current_user_playlists(limit=50, offset=len(self.saved_playlists_cache))['items']
 			if len(new_playlists) == 0:
 				break
-			self.saved_playlists_cache.extend(new_playlists)
+			self.saved_playlists_cache.extend([SpotifyPlaylist(item) for item in new_playlists])
 
 		self.set_uncategorized_playlists()
 
@@ -80,7 +81,7 @@ class SpotifyWrapper:
 			new_songs = self.spotify.current_user_saved_tracks(limit=50, offset=len(self.saved_songs_cache))['items']
 			if len(new_songs) == 0:
 				break
-			self.saved_songs_cache.extend([song['track'] for song in new_songs])
+			self.saved_songs_cache.extend([Song(song['track']) for song in new_songs])
 
 		self.set_uncategorized_songs()
 
@@ -94,7 +95,7 @@ class SpotifyWrapper:
 
 			if len(new_artists) == 0:
 				break
-			self.saved_artists_cache.extend(new_artists)
+			self.saved_artists_cache.extend([Artist(item) for item in new_artists])
 
 		self.set_uncategorized_artists()
 		
@@ -119,11 +120,11 @@ class SpotifyWrapper:
 			dct = None
 			with open(self.cache_file_name, 'r') as f:
 				dct = json.loads(f.readline())
-			self.resource_cache = dct['resource_cache']
-			self.saved_albums_cache = dct['saved_albums_cache']
-			self.saved_playlists_cache = dct['saved_playlists_cache']
-			self.saved_songs_cache = dct['saved_songs_cache']
-			self.saved_artists_cache = dct['saved_artists_cache']
+			self.resource_cache = {uri : self.create_resource(item) for uri, item in dct['resource_cache'].items()}
+			self.saved_albums_cache = [self.create_resource(item) for item in dct['saved_albums_cache']]
+			self.saved_playlists_cache = [self.create_resource(item) for item in dct['saved_playlists_cache']]
+			self.saved_songs_cache = [self.create_resource(item) for item in dct['saved_songs_cache']]
+			self.saved_artists_cache = [self.create_resource(item) for item in dct['saved_artists_cache']]
 			self.set_uncategorized_albums()
 			self.set_uncategorized_playlists()
 			self.set_uncategorized_songs()
@@ -137,11 +138,11 @@ class SpotifyWrapper:
 	def save_cache(self):
 		with open(self.cache_file_name, 'w') as f:
 			f.write(json.dumps({
-				'resource_cache' : self.resource_cache,
-				'saved_albums_cache' : self.saved_albums_cache,
-				'saved_playlists_cache' : self.saved_playlists_cache,
-				'saved_songs_cache' : self.saved_songs_cache,
-				'saved_artists_cache' : self.saved_artists_cache,
+				'resource_cache' : {uri : item.to_json() for uri, item in self.resource_cache.items()},
+				'saved_albums_cache' : [item.to_json() for item in self.saved_albums_cache],
+				'saved_playlists_cache' : [item.to_json() for item in self.saved_playlists_cache],
+				'saved_songs_cache' : [item.to_json() for item in self.saved_songs_cache],
+				'saved_artists_cache' : [item.to_json() for item in self.saved_artists_cache],
 				}))
 	
 	def reload_saved_albums_cache(self):
@@ -182,13 +183,13 @@ class SpotifyWrapper:
 			for offset in range(0, len(uris), STEP_SIZE):
 				new_albums = self.spotify.albums(uris[offset : offset + STEP_SIZE])
 				for uri, album in zip(uris[offset : offset + STEP_SIZE], new_albums['albums']):
-					self.resource_cache[uri] = album
+					self.resource_cache[uri] = Album(album)
 
 	def cache_songs(self, uris):
 		if len(uris) > 0:
 			new_songs = self.spotify.tracks(uris)
 			for uri, song in zip(uris, new_songs['tracks']):
-				self.resource_cache[uri] = song
+				self.resource_cache[uri] = Song(song)
 
 	def cache_artists(self, uris):
 		if len(uris) > 0:
@@ -201,13 +202,13 @@ class SpotifyWrapper:
 						break
 					albums.extend(new_albums)
 				artist['albums'] = albums
-				self.resource_cache[uri] = artist
+				self.resource_cache[uri] = Artist(artist)
 
 	def cache_spotify_playlists(self, uris):
 		if len(uris) > 0:
 			for uri in uris:
 				playlist = self.spotify.playlist(uri)
-				self.resource_cache[uri] = playlist
+				self.resource_cache[uri] = SpotifyPlaylist(playlist)
 
 	@staticmethod
 	def is_album_uri(uri):
@@ -232,14 +233,14 @@ class SpotifyWrapper:
 	def current_country(self): # TODO: Use more often or never probably
 		return self.current_country_code
 
-	def cache_uncached_albums(self, uris):  # TODO: Also do that for playlists, songs, etc
+	def cache_uncached_albums(self, uris: list):  # TODO: Also do that for playlists, songs, etc
 		uncached = []
 		for uri in uris:
 			if self.is_album_uri(uri) and not uri in self.resource_cache:
 				uncached.append(uri)
 		self.cache_albums(uncached)
 	
-	def get_resource(self, uri):
+	def get_resource(self, uri: str) -> Resource:
 		if not uri in self.resource_cache:
 			if self.is_album_uri(uri):
 				self.cache_albums([uri])
@@ -250,10 +251,23 @@ class SpotifyWrapper:
 			elif self.is_spotify_playlist_uri(uri):
 				self.cache_spotify_playlists([uri])
 			elif self.is_arkhes_playlist_uri(uri):
-				return {'name' : uri[len(self.prefix):].strip(), 'type' : self.resource_type, 'uri' : uri, 'release_date' : '0000-00-00', 'popularity' : 0}
+				return ArkhesPlaylist({'name' : uri[len(self.prefix):].strip(), 'type' : self.resource_type, 'uri' : uri, 'release_date' : '0000-00-00', 'popularity' : 0}) #TODO
 			else:
-				return []
+				return Resource({})
+
 		return self.resource_cache[uri]
+	
+	def create_resource(self, dct: dict) -> Resource:
+		if self.is_album_uri(dct['uri']):
+			return Album(dct)
+		elif self.is_song_uri(dct['uri']):
+			return Song(dct)
+		elif self.is_artist_uri(dct['uri']):
+			return Artist(dct)
+		elif self.is_spotify_playlist_uri(dct['uri']):
+			return SpotifyPlaylist(dct)
+		elif self.is_arkhes_playlist_uri(dct['uri']):
+			return ArkhesPlaylist(dct)
 	
 	def play_uris(self, uris):
 		if len(uris) > 750:

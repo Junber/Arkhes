@@ -5,6 +5,7 @@ import random
 from tkinter import N, W, S, E, ttk
 import tkinter
 
+from resource import Resource
 from spotifyWrapper import SpotifyWrapper, spotify_wrapper
 from arkhesPlaylists import ArkhesPlaylists
 from resourceList import ResourceList
@@ -12,7 +13,7 @@ from currentPlaylistFrame import CurrentPlaylistFrame
 from currentPlaybackFrame import CurrentPlaybackFrame
 
 class Player:
-	def __init__(self, root: ttk.Widget):
+	def __init__(self, root: ttk.Widget) -> None:
 		self.current_playback = []
 		self.current_playback_album_position = 0
 		self.current_playback_track_position = 0
@@ -45,7 +46,7 @@ class Player:
 
 		self.name_changed()
 	
-	def save_dict(self):
+	def save_dict(self) -> dict:
 		return {
 			'track_shuffle' : self.track_shuffle.get(),
 			'album_shuffle' : self.album_shuffle.get(),
@@ -54,7 +55,7 @@ class Player:
 			'album_list' : self.album_list.save_dict()
 			}
 	
-	def load_from(self, dct):
+	def load_from(self, dct: dict) -> None:
 		self.track_shuffle.set(dct['track_shuffle'])
 		self.album_shuffle.set(dct['album_shuffle'])
 		self.current_playlist_frame.load_from(dct['current'])
@@ -62,49 +63,20 @@ class Player:
 		self.album_list.load_from(dct['album_list'])
 		
 		self.name_changed()
-	
-	def get_uris(self, resource):
-		uri = resource['uri']
-		uris = []
-		if SpotifyWrapper.is_album_uri(uri):
-			tracks = resource['tracks']['items']
-			uris = [track['uri'] for track in tracks]
-			if not self.album_shuffle.get() and self.track_shuffle.get():
-				random.shuffle(uris)
-			uris = [uris]
-		elif SpotifyWrapper.is_arkhes_playlist_uri(uri):
-			uris = self.get_playlist(resource['name'])
-		elif SpotifyWrapper.is_song_uri(uri):
-			uris = [[uri]]
-		elif SpotifyWrapper.is_spotify_playlist_uri(uri):
-			tracks = resource['tracks']['items']
-			uris = [item['track']['uri'] for item in tracks]
-			if not self.album_shuffle.get() and self.track_shuffle.get():
-				random.shuffle(uris)
-			uris = [uris]
-		elif SpotifyWrapper.is_artist_uri(uri):
-			albums = resource['albums']
-			uris = [uri_list for album in albums for uri_list in self.get_uris(album['uri'])]
-		
-		return uris
-	
-	@staticmethod
-	def flatten(uris):
-		return list(itertools.chain.from_iterable(uris))
-	
-	def get_playlist(self, playlist):
-		return Player.flatten([self.get_uris(line) for line in ArkhesPlaylists.get_playlist(playlist)])
 
-	def get_playlist_and_shuffle(self, playlist):
-		uris = self.get_playlist(playlist)
+	def get_playlist_and_shuffle(self, playlist: Resource):
+		uris = playlist.get_track_uris()
 
-		if self.album_shuffle.get() and not self.track_shuffle.get():
+		if self.album_shuffle.get():
 			random.shuffle(uris)
+		if self.track_shuffle.get():
+			for uri_list in uris:
+				random.shuffle(uri_list)
 		
 		return uris
 	
 	def flatten_uris(self, uris):
-		uris = Player.flatten(uris)
+		uris = Resource.flatten(uris)
 
 		if self.album_shuffle.get() and self.track_shuffle.get():
 			random.shuffle(uris)
@@ -115,7 +87,7 @@ class Player:
 		return self.current_playlist_frame.name_entry.get()
 	
 	def play(self, *_):
-		self.current_playback = self.get_playlist_and_shuffle(self.get_name())
+		self.current_playback = self.get_playlist_and_shuffle(ArkhesPlaylists.get_playlist(self.get_name()))
 		self.current_playback_album_position = 0
 		self.current_playback_track_position = 0
 		uris = self.flatten_uris(self.current_playback)

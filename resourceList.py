@@ -119,7 +119,7 @@ class ResourceList:
 		return album_name
 
 	def add_button(self, album, x, y, text, width, command, disabled):
-		button = ttk.Button(self.albums_frame, text=text, style=album['type']+'.TButton', width = width)
+		button = ttk.Button(self.albums_frame, text=text, style=album.get_type()+'.TButton', width = width)
 		button.configure(command = command)
 		button.grid(column = x, row = y, sticky = (W, E))
 		button.grid_configure(padx=1, pady=1)
@@ -127,12 +127,12 @@ class ResourceList:
 			button.state(['disabled'])
 	
 	def add_button_row(self, album, albumNum, y):
-		button = ttk.Button(self.albums_frame, text=self.clamp_name(album['name']), style=album['type']+'.TButton', width = self.name_length + 2)
+		button = ttk.Button(self.albums_frame, text=self.clamp_name(album.get_name()), style=album.get_type()+'.TButton', width = self.name_length + 2)
 		button.configure(command = partial(self.album_clicked_callback, album))
 		button.grid(column = 0, row = y, sticky = (W, E))
 		button.grid_configure(padx=1, pady=1)
 
-		self.add_button(album, 0, y, self.clamp_name(album['name']), self.name_length + 2,
+		self.add_button(album, 0, y, self.clamp_name(album.get_name()), self.name_length + 2,
 			partial(self.album_clicked_callback, album),
 			self.enabled_lambda is not None and not self.enabled_lambda(album, albumNum))
 
@@ -176,7 +176,7 @@ class ResourceList:
 		self.change_page(0)
 	
 	def set_items_with_path(self, name):
-		self.set_items(ArkhesPlaylists.get_playlist(name))
+		self.set_items(ArkhesPlaylists.get_playlist_items(name))
 	
 	def set_items_with_saved_albums(self, categorization_mode):
 		self.set_items(spotify_wrapper.saved_albums(categorization_mode))

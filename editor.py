@@ -34,14 +34,14 @@ class Editor:
 
 		self.album_list = ResourceList(root, self, 'Contents', 24, self.open_item,
 			[
-				[lambda item, _: str(item['rating']), self.set_rating],
+				[lambda item, _: str(item.get_rating()), self.set_rating],
 				["Play", self.play],
 				["Copy", self.copy_item],
-				["↑", self.move_item_up, lambda album, _: album['lineNumber'] > 0],
-				["↓", self.move_item_down, lambda album, albumNum: album['lineNumber'] < albumNum-1],
+				["↑", self.move_item_up, lambda album, _: album.get_line_number() > 0],
+				["↓", self.move_item_down, lambda album, albumNum: album.get_line_number() < albumNum-1],
 				["X", self.remove_item_from_list]
 			],
-			lambda item, _: not SpotifyWrapper.is_song_uri(item['uri']))
+			lambda item, _: not SpotifyWrapper.is_song_uri(item.get_uri()))
 		self.album_list.grid(column=1, row=0, rowspan=2, sticky=(N, W, E, S))
 
 		self.notebook = ttk.Notebook(root)
@@ -100,7 +100,7 @@ class Editor:
 				["Add", self.add_item],
 				["X", removeFunction]
 			],
-			lambda item, _: not SpotifyWrapper.is_song_uri(item['uri']))
+			lambda item, _: not SpotifyWrapper.is_song_uri(item.get_uri()))
 		saved_list.grid(column=0, row=0, sticky=(N, W, E, S))
 
 		frame.columnconfigure(0, weight=1)
@@ -154,7 +154,7 @@ class Editor:
 		
 	def play(self, album):
 		spotify_wrapper.shuffle(False)
-		spotify_wrapper.play(album['uri'])
+		spotify_wrapper.play(album.get_uri())
 	
 	def uri_categorized(self, uri):
 		self.name_changed()
@@ -177,41 +177,41 @@ class Editor:
 	def set_rating(self, item):
 		result = simpledialog.askinteger('Rating', 'Enter your new rating for this album.')
 		if result is not None:
-			item['rating'] = result
+			item.set_rating(result)
 			ArkhesPlaylists.update_item_in_playlist(self.get_current_name(), item)
 			self.name_changed()
 	
 	def remove_item_from_list(self, item):
 		ArkhesPlaylists.remove_item_from_playlist(self.get_current_name(), item)
-		self.uri_uncategorized(item['uri'])
+		self.uri_uncategorized(item.get_uri())
 	
 	def remove_saved_album(self, album):
-		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved albums on Spotify?' % album['name'])
+		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved albums on Spotify?' % album.get_name())
 		if result:
-			spotify_wrapper.remove_saved_album(album['uri'])
+			spotify_wrapper.remove_saved_album(album.get_uri())
 			self.update_saved_album_list()
 	
 	def remove_saved_playlist(self, playlist):
-		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved playlists on Spotify?' % playlist['name'])
+		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved playlists on Spotify?' % playlist.get_name())
 		if result:
-			spotify_wrapper.remove_saved_playlist(playlist['uri'])
+			spotify_wrapper.remove_saved_playlist(playlist.get_uri())
 			self.update_saved_playlists_list()
 	
 	def remove_saved_song(self, song):
-		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved songs on Spotify?' % song['name'])
+		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved songs on Spotify?' % song.get_name())
 		if result:
-			spotify_wrapper.remove_saved_song(song['uri'])
+			spotify_wrapper.remove_saved_song(song.get_uri())
 			self.update_saved_songs_list()
 	
 	def remove_saved_artist(self, artist):
-		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved artists on Spotify?' % artist['name'])
+		result = messagebox.askyesno('Delete', 'Do you really want to remove %s from your saved artists on Spotify?' % artist.get_name())
 		if result:
-			spotify_wrapper.remove_saved_artist(artist['uri'])
+			spotify_wrapper.remove_saved_artist(artist.get_uri())
 			self.update_saved_artists_list()
 
 	def copy_item(self, item):
 		ArkhesPlaylists.add_item_to_playlist(self.get_target_name(), item)
-		self.uri_categorized(item['uri'])
+		self.uri_categorized(item.get_uri())
 	
 	def move_item_up(self, item):
 		ArkhesPlaylists.move_item_up(self.get_current_name(), item)
@@ -226,29 +226,21 @@ class Editor:
 		self.uri_categorized(uri)
 
 	def add_item(self, item):
-		self.add_uri(item['uri'])
+		self.add_uri(item.get_uri())
 	
 	def open_item(self, album):
-		if SpotifyWrapper.is_arkhes_playlist_uri(album['uri']):
+		if SpotifyWrapper.is_arkhes_playlist_uri(album.get_uri()):
 			self.current_playlist_frame.save_current_position()
-			self.set_current_name(album['name'])
+			self.set_current_name(album.get_name())
 		else:
-			self.album_contents_uri_name_entry.set(album['uri'])
+			self.album_contents_uri_name_entry.set(album.get_uri())
 
 	def open_album_contents_uri(self, *_):
 		self.notebook.select(4)
 		uri = self.album_contents_uri_name_entry.get()
 		resource = spotify_wrapper.get_resource(uri)
-		if len(resource) == 0:
-			self.album_contents_list.set_items([])
-		elif SpotifyWrapper.is_album_uri(uri):
-			self.album_contents_list.set_items(resource['tracks']['items'])
-		elif SpotifyWrapper.is_spotify_playlist_uri(uri):
-			self.album_contents_list.set_items([track['track'] for track in resource['tracks']['items']])
-		elif SpotifyWrapper.is_artist_uri(uri):
-			self.album_contents_list.set_items(resource['albums'])
-		else:
-			self.album_contents_list.set_items([])
+
+		self.album_contents_list.set_items(resource.get_contents())
 
 	def name_changed(self):
 		self.album_list.set_items_with_path(self.get_current_name())

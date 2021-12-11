@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 from tkinter import messagebox
-from spotifyWrapper import spotify_wrapper
+from resource import Resource
+from spotifyWrapper import SpotifyWrapper, spotify_wrapper
 
 class FileUtils:	
 	@staticmethod
@@ -79,32 +80,31 @@ class ArkhesPlaylists:
 	playlist_location = 'playlists'
 		
 	@staticmethod
-	def path_for(name: str):
+	def path_for(name: str) -> str:
 		return os.path.join(ArkhesPlaylists.playlist_location, name + '.txt')
 	
 	@staticmethod
-	def get_resource_from_line(line: str, lineNumber: int):
+	def get_resource_from_line(line: str, lineNumber: int) -> Resource:
 		lineParts = line.split(' ')
 		resource = spotify_wrapper.get_resource(lineParts[0])
 		
-		resource['playlistLine'] = line
-		resource['lineNumber'] = lineNumber
-		resource['rating'] = -1
+		resource.set_line(line, lineNumber)
+
 		if len(lineParts) > 1:
-			resource['rating'] = lineParts[1]
+			resource.set_rating(lineParts[1])
 
 		return resource
 	
 	@staticmethod
-	def get_line_from_resource(resource: dict):
+	def get_line_from_resource(resource: dict) -> str:
 		if 'rating' not in resource or resource['rating'] < 0:
 			return resource['uri']
 		else:
 			return "{} {}".format(resource['uri'], resource['rating'])
 
 	@staticmethod
-	def get_playlist(playlist: str):
-		path = ArkhesPlaylists.path_for(playlist)
+	def get_playlist_items(name: str) -> list:
+		path = ArkhesPlaylists.path_for(name)
 		if Path(path).is_file():
 			lines = FileUtils.get_lines_from_file(path)
 			#spotify_wrapper.cache_uncached_albums(lines) #TODO: Make this work despite ratings and reenable this again
@@ -113,27 +113,31 @@ class ArkhesPlaylists:
 			return []
 	
 	@staticmethod
-	def remove_item_from_playlist(playlist: str, item: dict):
+	def get_playlist(name: str) -> Resource:
+		return spotify_wrapper.get_resource(SpotifyWrapper.prefix + name)
+	
+	@staticmethod
+	def remove_item_from_playlist(playlist: str, item: dict) -> None:
 		FileUtils.remove_line_from_file(ArkhesPlaylists.path_for(playlist), item['lineNumber'])
 		
 	@staticmethod
-	def add_item_to_playlist(playlist: str, item: dict):
+	def add_item_to_playlist(playlist: str, item: dict) -> None:
 		FileUtils.add_line_to_file(ArkhesPlaylists.path_for(playlist), ArkhesPlaylists.get_line_from_resource(item))
 	
 	@staticmethod
-	def update_item_in_playlist(playlist: str, item: dict):
+	def update_item_in_playlist(playlist: str, item: dict) -> None:
 		FileUtils.update_line_in_file(ArkhesPlaylists.path_for(playlist), item['lineNumber'], ArkhesPlaylists.get_line_from_resource(item))
 	
 	@staticmethod
-	def move_item_up(playlist: str, item: dict):
+	def move_item_up(playlist: str, item: dict) -> None:
 		FileUtils.move_line_down(ArkhesPlaylists.path_for(playlist), item['lineNumber'] - 1)
 	
 	@staticmethod
-	def move_item_down(playlist: str, item: dict):
+	def move_item_down(playlist: str, item: dict) -> None:
 		FileUtils.move_line_down(ArkhesPlaylists.path_for(playlist), item['lineNumber'])
 
 	@staticmethod
-	def rename_playlist(playlist: str, new_name: str):
+	def rename_playlist(playlist: str, new_name: str) -> None:
 		if Path(new_name).is_file():
 			messagebox.showinfo(message='Playlist already exists')
 		else:
