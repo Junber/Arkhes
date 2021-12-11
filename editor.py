@@ -34,14 +34,14 @@ class Editor:
 
 		self.album_list = ResourceList(root, self, 'Contents', 24, self.open_item,
 			[
-				[lambda item, _: str(item.get_rating()), self.set_rating],
+				[lambda item, _: str(item.rating()), self.set_rating],
 				["Play", self.play],
 				["Copy", self.copy_item],
-				["↑", self.move_item_up, lambda album, _: album.get_line_number() > 0],
-				["↓", self.move_item_down, lambda album, albumNum: album.get_line_number() < albumNum-1],
+				["↑", self.move_item_up, lambda album, _: album.line_number() > 0],
+				["↓", self.move_item_down, lambda album, albumNum: album.line_number() < albumNum-1],
 				["X", self.remove_item_from_list]
 			],
-			lambda item, _: not SpotifyWrapper.is_song_uri(item.get_uri()))
+			lambda item, _: not SpotifyWrapper.is_song_uri(item.uri()))
 		self.album_list.grid(column=1, row=0, rowspan=2, sticky=(N, W, E, S))
 
 		self.notebook = ttk.Notebook(root)
@@ -100,7 +100,7 @@ class Editor:
 				["Add", self.add_item],
 				["X", removeFunction]
 			],
-			lambda item, _: not SpotifyWrapper.is_song_uri(item.get_uri()))
+			lambda item, _: not SpotifyWrapper.is_song_uri(item.uri()))
 		saved_list.grid(column=0, row=0, sticky=(N, W, E, S))
 
 		frame.columnconfigure(0, weight=1)
@@ -240,7 +240,7 @@ class Editor:
 		uri = self.album_contents_uri_name_entry.get()
 		resource = spotify_wrapper.get_resource(uri)
 
-		self.album_contents_list.set_items(resource.get_contents())
+		self.album_contents_list.set_items(resource.contents())
 
 	def name_changed(self):
 		self.album_list.set_items_with_path(self.get_current_name())

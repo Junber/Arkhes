@@ -1,12 +1,12 @@
 import os
 from pathlib import Path
 from tkinter import messagebox
-from resource import Resource
+from resources import Resource
 from spotifyWrapper import SpotifyWrapper, spotify_wrapper
 
 class FileUtils:	
 	@staticmethod
-	def get_lines_from_file(filename: str):
+	def get_lines_from_file(filename: str) -> list:
 		try:
 			with open(filename) as f:
 				return [line.strip('\n') for line in f]
@@ -14,14 +14,14 @@ class FileUtils:
 			return []
 	
 	@staticmethod
-	def add_line_to_file(filename: str, line: str):
+	def add_line_to_file(filename: str, line: str) -> None:
 		with open(filename, 'a') as f:
 			if f.tell() != 0:
 				f.write('\n')
 			f.write(line)
 	
 	@staticmethod
-	def move_line_down(filename: str, line_number_to_move: int):
+	def move_line_down(filename: str, line_number_to_move: int) -> None:
 		with open(filename, 'r+') as f:
 			d = [line.strip('\n') for line in f]
 			f.seek(0)
@@ -45,7 +45,7 @@ class FileUtils:
 				line_number += 1
 	
 	@staticmethod
-	def remove_line_from_file(filename: str, line_number_to_remove: int):
+	def remove_line_from_file(filename: str, line_number_to_remove: int) -> None:
 		with open(filename, 'r+') as f:
 			d = [line.strip('\n') for line in f]
 			f.seek(0)
@@ -59,7 +59,7 @@ class FileUtils:
 				line_number += 1
 
 	@staticmethod
-	def update_line_in_file(filename: str, line_number_to_update: int, new_line: str):
+	def update_line_in_file(filename: str, line_number_to_update: int, new_line: str) -> None:
 		with open(filename, 'r+') as f:
 			d = [line.strip('\n') for line in f]
 			f.seek(0)
@@ -94,13 +94,6 @@ class ArkhesPlaylists:
 			resource.set_rating(lineParts[1])
 
 		return resource
-	
-	@staticmethod
-	def get_line_from_resource(resource: dict) -> str:
-		if 'rating' not in resource or resource['rating'] < 0:
-			return resource['uri']
-		else:
-			return "{} {}".format(resource['uri'], resource['rating'])
 
 	@staticmethod
 	def get_playlist_items(name: str) -> list:
@@ -117,24 +110,24 @@ class ArkhesPlaylists:
 		return spotify_wrapper.get_resource(SpotifyWrapper.prefix + name)
 	
 	@staticmethod
-	def remove_item_from_playlist(playlist: str, item: dict) -> None:
-		FileUtils.remove_line_from_file(ArkhesPlaylists.path_for(playlist), item['lineNumber'])
+	def remove_item_from_playlist(playlist: str, item: Resource) -> None:
+		FileUtils.remove_line_from_file(ArkhesPlaylists.path_for(playlist), item.line_number())
 		
 	@staticmethod
-	def add_item_to_playlist(playlist: str, item: dict) -> None:
-		FileUtils.add_line_to_file(ArkhesPlaylists.path_for(playlist), ArkhesPlaylists.get_line_from_resource(item))
+	def add_item_to_playlist(playlist: str, item: Resource) -> None:
+		FileUtils.add_line_to_file(ArkhesPlaylists.path_for(playlist), item.line_to_write())
 	
 	@staticmethod
-	def update_item_in_playlist(playlist: str, item: dict) -> None:
-		FileUtils.update_line_in_file(ArkhesPlaylists.path_for(playlist), item['lineNumber'], ArkhesPlaylists.get_line_from_resource(item))
+	def update_item_in_playlist(playlist: str, item: Resource) -> None:
+		FileUtils.update_line_in_file(ArkhesPlaylists.path_for(playlist), item.line_number(), item.line_to_write())
 	
 	@staticmethod
-	def move_item_up(playlist: str, item: dict) -> None:
-		FileUtils.move_line_down(ArkhesPlaylists.path_for(playlist), item['lineNumber'] - 1)
+	def move_item_up(playlist: str, item: Resource) -> None:
+		FileUtils.move_line_down(ArkhesPlaylists.path_for(playlist), item.line_number() - 1)
 	
 	@staticmethod
-	def move_item_down(playlist: str, item: dict) -> None:
-		FileUtils.move_line_down(ArkhesPlaylists.path_for(playlist), item['lineNumber'])
+	def move_item_down(playlist: str, item: Resource) -> None:
+		FileUtils.move_line_down(ArkhesPlaylists.path_for(playlist), item.line_number())
 
 	@staticmethod
 	def rename_playlist(playlist: str, new_name: str) -> None:

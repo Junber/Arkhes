@@ -6,7 +6,7 @@ from PIL import ImageTk, Image
 import spotipy
 from spotipy.oauth2 import SpotifyPKCE
 
-from resource import ArkhesPlaylist, Resource, Album, SpotifyPlaylist, Song, Artist
+from resources import ArkhesPlaylist, Playback, Resource, Album, SpotifyPlaylist, Song, Artist
 
 class SpotifyWrapper:
 	prefix = 'arkhes:'
@@ -47,16 +47,16 @@ class SpotifyWrapper:
 				self.set_uncategorized_artists()
 	
 	def set_uncategorized_albums(self):
-		self.uncategorized_albums = [album for album in self.saved_albums_cache if album.get_uri() not in self.categorizations]
+		self.uncategorized_albums = [album for album in self.saved_albums_cache if album.uri() not in self.categorizations]
 
 	def set_uncategorized_playlists(self):
-		self.uncategorized_playlists = [playlist for playlist in self.saved_playlists_cache if playlist.get_uri() not in self.categorizations]
+		self.uncategorized_playlists = [playlist for playlist in self.saved_playlists_cache if playlist.uri() not in self.categorizations]
 
 	def set_uncategorized_songs(self):
-		self.uncategorized_songs = [song for song in self.saved_songs_cache if song.get_uri() not in self.categorizations]
+		self.uncategorized_songs = [song for song in self.saved_songs_cache if song.uri() not in self.categorizations]
 
 	def set_uncategorized_artists(self):
-		self.uncategorized_artists = [artist for artist in self.saved_artists_cache if artist.get_uri() not in self.categorizations]
+		self.uncategorized_artists = [artist for artist in self.saved_artists_cache if artist.uri() not in self.categorizations]
 
 	def load_saved_albums(self):
 		while True:
@@ -212,19 +212,19 @@ class SpotifyWrapper:
 
 	@staticmethod
 	def is_album_uri(uri):
-		return uri.startswith('https://open.spotify.com/album/') or uri.startswith('spotify:album')
+		return uri.startswith('https://open.spotify.com/album/') or uri.startswith('spotify:album:')
 
 	@staticmethod
 	def is_song_uri(uri):
-		return uri.startswith('https://open.spotify.com/track/') or uri.startswith('spotify:track')
+		return uri.startswith('https://open.spotify.com/track/') or uri.startswith('spotify:track:')
 
 	@staticmethod
 	def is_artist_uri(uri):
-		return uri.startswith('https://open.spotify.com/artist/') or uri.startswith('spotify:artist')
+		return uri.startswith('https://open.spotify.com/artist/') or uri.startswith('spotify:artist:')
 
 	@staticmethod
 	def is_spotify_playlist_uri(uri):
-		return uri.startswith('https://open.spotify.com/playlist/') or uri.startswith('spotify:playlist')
+		return uri.startswith('https://open.spotify.com/playlist/') or uri.startswith('spotify:playlist:')
 
 	@staticmethod
 	def is_arkhes_playlist_uri(uri):
@@ -347,19 +347,19 @@ class SpotifyWrapper:
 		self.uncategorized_artists = [i for i in self.uncategorized_artists if i['uri'] != uri]
 	
 	def get_current_playback(self):
-		return self.spotify.current_playback()
+		return Playback(self.spotify.current_playback())
 	
-	def get_album_cover(self, album, size):
-		path = os.path.join(self.cover_cache_location, album['id'] + '.jpg')
+	def get_album_cover(self, album: Album, size: int) -> ImageTk.PhotoImage:
+		path = os.path.join(self.cover_cache_location, album.id() + '.jpg')
 
 		if not Path(path).is_file():
-			url = album['images'][0]['url']
+			url = album.cover_url()
 			with open(path, 'wb') as file:
 				file.write(requests.get(url).content)
 
 		return self.get_image(path, size)
 	
-	def get_image(self, path, size):
+	def get_image(self, path: str, size: int) -> ImageTk.PhotoImage:
 		return ImageTk.PhotoImage(Image.open(path).resize([size, size]))
 
 

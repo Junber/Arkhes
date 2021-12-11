@@ -80,20 +80,20 @@ class CurrentPlaybackFrame:
 			return
 
 		playback = spotify_wrapper.get_current_playback()
-		if playback is not None and playback['item'] is not None:
-			self.current_track_progress.set(playback['progress_ms']) # TODO: Make smoother
-			self.current_track_progress_string.set(datetime.timedelta(seconds=int(playback['progress_ms']/1000)))
-			self.volume.set(playback['device']['volume_percent'])
+		if playback is not None and not playback.is_none():
+			self.current_track_progress.set(playback.progress_ms()) # TODO: Make smoother
+			self.current_track_progress_string.set(playback.progress())
+			self.volume.set(playback.volume())
 
-			name = playback['item']['name']
+			name = playback.name()
 			if name != self.get_current_track_name():
-				self.player.update_playback_position(playback['item']['uri'])
-				self.current_track_progress_scale.configure(to=playback['item']['duration_ms'])
-				self.total_track_time_string.set(datetime.timedelta(seconds=int(playback['item']['duration_ms']/1000)))
-				album = playback['item']['album']
+				self.player.update_playback_position(playback.uri())
+				self.current_track_progress_scale.configure(to=playback.duration_ms())
+				self.total_track_time_string.set(playback.duration())
+				album = playback.album()
 				self.set_current_track_name(name)
-				self.current_album_name.set("Album: " + album['name'] + " (Track: " + str(playback['item']['track_number']) + "/" + str(album['total_tracks']) + ")")
-				self.current_artist_name.set("Artist: " + playback['item']['artists'][0]['name'])  #TODO: Handle multiple artists
+				self.current_album_name.set("Album: " + album.name() + " (Track: " + str(playback.track_number()) + "/" + str(album.number_of_tracks()) + ")")
+				self.current_artist_name.set("Artist: " + playback.artist().name())
 				self.set_cover(spotify_wrapper.get_album_cover(album, self.cover_size))
 	
 	def get_current_track_name(self):

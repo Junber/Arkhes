@@ -4,8 +4,8 @@ from playlistNameEntry import PlaylistNameEntry
 from spotifyWrapper import spotify_wrapper
 
 class UriFrame:
-	def __init__(self, root, editor):
-		self.editor = editor
+	def __init__(self, root, owner):
+		self.owner = owner
 
 		self.frame = ttk.Labelframe(root, text='URI', padding='5 5 5 5')
 		self.frame.columnconfigure(0, weight=1)
@@ -22,4 +22,4 @@ class UriFrame:
 		if len(object) == 0:
 			messagebox.showinfo(message='Invalid URI')
 			return
-		self.editor.add_uri(object['uri'])
+		self.owner.add_uri(object.uri())

@@ -33,26 +33,26 @@ class AddCurrentPlaybackFrame:
 
 
 	def add_song(self):
-		self.editor.add_item(spotify_wrapper.get_current_playback()['item'])
+		self.editor.add_item(spotify_wrapper.get_current_playback().song())
 	
 	def add_album(self):
-		self.editor.add_item(spotify_wrapper.get_current_playback()['item']['album'])
+		self.editor.add_item(spotify_wrapper.get_current_playback().album())
 	
 	def add_artist(self):
-		self.editor.add_item(spotify_wrapper.get_current_playback()['item']['artists'][0]) #TODO: Handle multiple artists
+		self.editor.add_item(spotify_wrapper.get_current_playback().artist())
 	
 	def add_context(self):
-		self.editor.add_item(spotify_wrapper.get_current_playback()['context'])
+		self.editor.add_item(spotify_wrapper.get_current_playback().context())
 
 
 	def open_song(self):
-		self.editor.open_item(spotify_wrapper.get_current_playback()['item'])
+		self.editor.open_item(spotify_wrapper.get_current_playback().song())
 	
 	def open_album(self):
-		self.editor.open_item(spotify_wrapper.get_current_playback()['item']['album'])
+		self.editor.open_item(spotify_wrapper.get_current_playback().album())
 	
 	def open_artist(self):
-		self.editor.open_item(spotify_wrapper.get_current_playback()['item']['artists'][0]) #TODO: Handle multiple artists
+		self.editor.open_item(spotify_wrapper.get_current_playback().artist())
 	
 	def open_context(self):
-		self.editor.open_item(spotify_wrapper.get_current_playback()['context'])
+		self.editor.open_item(spotify_wrapper.get_current_playback().context())

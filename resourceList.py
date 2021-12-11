@@ -4,6 +4,7 @@ from functools import partial
 import tkinter
 from tkinter import N, W, S, E, ttk
 from typing import Callable
+from resources import Resource
 
 from tooltip import CreateToolTip
 from spotifyWrapper import spotify_wrapper
@@ -28,7 +29,7 @@ class ResourceList:
 		self.build_sort(self.sort_frame)
 		self.build_page_navigation(self.navigation_frame, default_item_number)
 	
-	def build_frames(self, parent: ttk.Widget, title: str):
+	def build_frames(self, parent: ttk.Widget, title: str) -> None:
 		if len(title) == 0:
 			self.outer_frame = ttk.Frame(parent)
 		else:
@@ -45,7 +46,7 @@ class ResourceList:
 		self.outer_frame.columnconfigure(0, weight=1)
 		self.outer_frame.rowconfigure(1, weight=1)
 	
-	def build_sort(self, parent: ttk.Widget):
+	def build_sort(self, parent: ttk.Widget) -> None:
 		ttk.Label(parent, text='Sort:').grid(column=0, row=0, sticky=(N, S, W, E))
 
 		self.current_sort = tkinter.StringVar(value=self.default_sort_name)
@@ -58,7 +59,7 @@ class ResourceList:
 		self.sort_direction_box = ttk.Combobox(parent, state="readonly", textvariable=self.current_sort_direction, values=[self.ascending_sort_name, 'Desc'])
 		self.sort_direction_box.grid(column=2, row=0, sticky=(N, S, W, E))
 	
-	def build_page_navigation(self, parent: ttk.Widget, default_item_number: int):
+	def build_page_navigation(self, parent: ttk.Widget, default_item_number: int) -> None:
 		self.page = 0
 		self.prev_button = ttk.Button(parent, text='Prev', command=lambda: self.change_page(-1))
 		self.prev_button.grid(column=0, row=0, sticky=(N, S, W, E))
@@ -78,17 +79,17 @@ class ResourceList:
 		parent.columnconfigure(1, weight=1)
 		parent.columnconfigure(2, weight=1)
 	
-	def save_dict(self):
+	def save_dict(self) -> None:
 		return {'page' : self.page, 'max_items_per_page' : self.max_items_per_page()}
 	
-	def load_from(self, dct):
+	def load_from(self, dct: dict) -> None:
 		self.page = dct['page']
 		self.max_items_per_page_string.set(str(dct['max_items_per_page']))
 
-	def grid(self, **args):
+	def grid(self, **args) -> None:
 		self.outer_frame.grid(args)
 	
-	def change_page(self, diff):
+	def change_page(self, diff: int) -> None:
 		self.page += diff
 		
 		items_per_page = self.max_items_per_page()
@@ -113,90 +114,90 @@ class ResourceList:
 
 		self.update_with_albums(self.items[self.page*items_per_page : (self.page + 1)*items_per_page])
 
-	def clamp_name(self, album_name):
+	def clamp_name(self, album_name: str) -> str:
 		if len(album_name) > self.name_length:
 			return album_name[:self.name_length-3] + "..."
 		return album_name
 
-	def add_button(self, album, x, y, text, width, command, disabled):
-		button = ttk.Button(self.albums_frame, text=text, style=album.get_type()+'.TButton', width = width)
+	def add_button(self, resource: Resource, x: int, y: int, text: str, width: int, command: callable, disabled: bool) -> None:
+		button = ttk.Button(self.albums_frame, text=text, style=resource.type()+'.TButton', width = width)
 		button.configure(command = command)
 		button.grid(column = x, row = y, sticky = (W, E))
 		button.grid_configure(padx=1, pady=1)
 		if disabled:
 			button.state(['disabled'])
 	
-	def add_button_row(self, album, albumNum, y):
-		button = ttk.Button(self.albums_frame, text=self.clamp_name(album.get_name()), style=album.get_type()+'.TButton', width = self.name_length + 2)
-		button.configure(command = partial(self.album_clicked_callback, album))
+	def add_button_row(self, resource: Resource, albumNum: int, y: int) -> None:
+		button = ttk.Button(self.albums_frame, text=self.clamp_name(resource.name()), style=resource.type()+'.TButton', width = self.name_length + 2)
+		button.configure(command = partial(self.album_clicked_callback, resource))
 		button.grid(column = 0, row = y, sticky = (W, E))
 		button.grid_configure(padx=1, pady=1)
 
-		self.add_button(album, 0, y, self.clamp_name(album.get_name()), self.name_length + 2,
-			partial(self.album_clicked_callback, album),
-			self.enabled_lambda is not None and not self.enabled_lambda(album, albumNum))
+		self.add_button(resource, 0, y, self.clamp_name(resource.name()), self.name_length + 2,
+			partial(self.album_clicked_callback, resource),
+			self.enabled_lambda is not None and not self.enabled_lambda(resource, albumNum))
 
 		for extraButtonIndex, extra in enumerate(self.extra_callbacks):
 			text = extra[0]
 			if not isinstance(text, str):
-				text = text(album, albumNum)
-			self.add_button(album, extraButtonIndex + 1, y, text, len(text) + 2,
-				partial(extra[1], album),
-				len(extra) > 2 and not extra[2](album, albumNum))
+				text = text(resource, albumNum)
+			self.add_button(resource, extraButtonIndex + 1, y, text, len(text) + 2,
+				partial(extra[1], resource),
+				len(extra) > 2 and not extra[2](resource, albumNum))
 	
-	def add_buttons(self, albums):
+	def add_buttons(self, albums: list) -> None:
 		for i, album in enumerate(albums):
 			self.add_button_row(album, len(albums), i)
 	
-	def destory_old_buttons(self):
+	def destory_old_buttons(self) -> None:
 		for child in self.old_buttons:
 			child.destroy()
 		self.old_buttons.clear()
 	
-	def clear_buttons(self):
+	def clear_buttons(self) -> None:
 		self.old_buttons = self.albums_frame.winfo_children()
 		self.albums_frame.after(20, self.destory_old_buttons) # Doing this with a delay reduces flickering somewhat
 	
-	def update_with_albums(self, albums):
+	def update_with_albums(self, albums: list) -> None:
 		self.clear_buttons()
 		self.add_buttons(albums)
 	
-	def perform_sort(self, items_to_be_sorted: list):
+	def perform_sort(self, items_to_be_sorted: list) -> None:
 		if self.current_sort.get() != self.default_sort_name:
 			items_to_be_sorted.sort(key = lambda x: x[self.sorts[self.current_sort.get()]],
 									reverse = (self.current_sort_direction.get() != self.ascending_sort_name))
 		elif self.current_sort_direction.get() != self.ascending_sort_name:
 			items_to_be_sorted.reverse()
 	
-	def set_items(self, items: list):
+	def set_items(self, items: list) -> None:
 		self.unsorted_items = items.copy()
 		self.items = items.copy()
 		self.perform_sort(self.items)
 
 		self.change_page(0)
 	
-	def set_items_with_path(self, name):
+	def set_items_with_path(self, name: str) -> None:
 		self.set_items(ArkhesPlaylists.get_playlist_items(name))
 	
-	def set_items_with_saved_albums(self, categorization_mode):
+	def set_items_with_saved_albums(self, categorization_mode: bool) -> None:
 		self.set_items(spotify_wrapper.saved_albums(categorization_mode))
 	
-	def set_items_with_saved_playlists(self, categorization_mode):
+	def set_items_with_saved_playlists(self, categorization_mode: bool) -> None:
 		self.set_items(spotify_wrapper.saved_playlists(categorization_mode))
 
-	def set_items_with_saved_songs(self, categorization_mode):
+	def set_items_with_saved_songs(self, categorization_mode: bool) -> None:
 		self.set_items(spotify_wrapper.saved_songs(categorization_mode))
 
-	def set_items_with_saved_artists(self, categorization_mode):
+	def set_items_with_saved_artists(self, categorization_mode: bool) -> None:
 		self.set_items(spotify_wrapper.saved_artists(categorization_mode))
 	
-	def sort_changed(self, *_):
+	def sort_changed(self, *_) -> None:
 		self.set_items(self.unsorted_items)
 	
-	def max_items_per_page_changed(self, *_):
+	def max_items_per_page_changed(self, *_) -> None:
 		self.change_page(0)
 	
-	def max_items_per_page(self):
+	def max_items_per_page(self) -> int:
 		items_per_page = self.max_items_per_page_string.get()
 		if items_per_page.isdigit():
 			return int(items_per_page)
