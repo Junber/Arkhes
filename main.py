@@ -17,7 +17,7 @@ class Window:
 	def __init__(self):
 		os.makedirs(ArkhesPlaylists.playlist_location, exist_ok=True)
 		os.makedirs(spotify_wrapper.cover_cache_location, exist_ok=True)
-		
+
 		self.root = tkinter.Tk()
 		self.root.title('Arkhes')
 		self.root.protocol('WM_DELETE_WINDOW', self.close)
@@ -38,14 +38,14 @@ class Window:
 		self.player = Player(self.add_mainframe('Play'))
 		self.editor = Editor(self.add_mainframe('Edit'))
 		self.settings = Settings(self.add_mainframe('Settings'))
-		
+
 		self.notebook.bind('<<NotebookTabChanged>>', self.tab_changed)
 		self.root.bind('<FocusIn>', lambda _: self.focus_changed(True))
 		self.root.bind('<FocusOut>', lambda _: self.focus_changed(False))
 
 		self.load()
 		self.root.mainloop()
-	
+
 	def close(self):
 		self.save()
 		spotify_wrapper.save_cache()
@@ -54,14 +54,14 @@ class Window:
 	def load(self):
 		if Path(self.save_file_name).is_file():
 			dct = None
-			with open(self.save_file_name, 'r') as f:
-				dct = json.loads(f.readline())
-			
+			with open(self.save_file_name, 'r', encoding='utf8') as file:
+				dct = json.loads(file.readline())
+
 			spotify_wrapper.load_from(dct['spotify'])
 			self.player.load_from(dct['player'])
 			self.editor.load_from(dct['editor'])
 			self.settings.load_from(dct['settings'])
-	
+
 	def save(self):
 		save_string = json.dumps(
 			{
@@ -71,21 +71,21 @@ class Window:
 				'spotify' : spotify_wrapper.save_dict()
 			})
 
-		with open(self.save_file_name, 'w') as f:
-			f.write(save_string)
-	
+		with open(self.save_file_name, 'w', encoding='utf8') as file:
+			file.write(save_string)
+
 	def set_player_active_flag(self):
 		self.player.set_active(self.focused and (self.notebook.index("current") == 0))
-	
+
 	def tab_changed(self, _):
 		self.player.name_changed()
 		self.editor.name_changed()
 		self.set_player_active_flag()
-	
+
 	def focus_changed(self, new_focus: bool):
 		self.focused = new_focus
 		self.set_player_active_flag()
-	
+
 	def add_mainframe(self, name):
 		mainframe = ttk.Frame(self.notebook, padding='3 3 12 12')
 		self.notebook.add(mainframe, text=name)

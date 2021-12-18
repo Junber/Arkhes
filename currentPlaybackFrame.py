@@ -1,5 +1,3 @@
-import datetime
-
 import tkinter
 from tkinter import N, W, S, E, ttk, HORIZONTAL
 
@@ -20,7 +18,8 @@ class CurrentPlaybackFrame:
 		self.album_cover_label.grid(column=0, row=0, rowspan=5, sticky=(N, S, W, E))
 		self.set_cover(spotify_wrapper.get_image('no_cover.jpg', self.cover_size))
 
-		self.current_album_name = tkinter.StringVar(value='[Album]') # TODO: Save album and artist to recover on start-up
+		# TODO: Save album and artist to recover on start-up
+		self.current_album_name = tkinter.StringVar(value='[Album]')
 		self.current_album_label = ttk.Label(self.frame, textvar=self.current_album_name, anchor='center')
 		self.current_album_label.grid(column=1, row=1, sticky=(S, W, E))
 
@@ -36,45 +35,51 @@ class CurrentPlaybackFrame:
 		self.current_track_progress = tkinter.IntVar(value=0)
 		self.current_track_progress_string = tkinter.StringVar(value ='[Time]')
 		self.total_track_time_string = tkinter.StringVar(value ='[Time]')
-		tkinter.Label(self.current_track_progress_frame, textvariable=self.current_track_progress_string).grid(column=0, row=0, sticky=(N, S, W, E))
-		self.current_track_progress_scale = ttk.Scale(self.current_track_progress_frame, orient=HORIZONTAL, variable=self.current_track_progress, command=self.changed_track_progress)
+		tkinter.Label(self.current_track_progress_frame, textvariable=self.current_track_progress_string)\
+			.grid(column=0, row=0, sticky=(N, S, W, E))
+
+		self.current_track_progress_scale = ttk.Scale(self.current_track_progress_frame, orient=HORIZONTAL,
+			variable=self.current_track_progress, command=self.changed_track_progress)
+
 		self.current_track_progress_scale.grid(column=1, row=0, sticky=(N, S, W, E))
-		tkinter.Label(self.current_track_progress_frame, textvariable=self.total_track_time_string).grid(column=2, row=0, sticky=(N, S, W, E))
+		tkinter.Label(self.current_track_progress_frame, textvariable=self.total_track_time_string)\
+			.grid(column=2, row=0, sticky=(N, S, W, E))
 
 		self.build_volume_frame()
 		self.volume_frame.grid(column=1, row=0, sticky=(S, W, E))
-		
+
 		self.frame.columnconfigure(1, weight=1)
 		self.frame.rowconfigure(0, weight=1)
 		self.current_track_progress_frame.columnconfigure(1, weight=1)
 
 		for thing in [self.frame, self.volume_frame]:
-			for child in thing.winfo_children(): 
+			for child in thing.winfo_children():
 				child.grid_configure(padx=5, pady=5)
 
 		self.current_playback = []
 		self.update_current_track_loop()
-		
-	
+
+
 	def build_volume_frame(self):
 		self.volume_frame = ttk.Frame(self.frame)
 		ttk.Label(self.volume_frame, text='Volume').grid(column=0, row=0, sticky=(N, S, W, E))
 		self.volume = tkinter.IntVar()
-		ttk.Scale(self.volume_frame, orient=HORIZONTAL, variable=self.volume, to=100, command=self.changed_volume).grid(column=1, row=0, sticky=(N, S, W, E))
-	
+		ttk.Scale(self.volume_frame, orient=HORIZONTAL, variable=self.volume, to=100, command=self.changed_volume)\
+			.grid(column=1, row=0, sticky=(N, S, W, E))
+
 	def grid(self, **args):
 		self.frame.grid(args)
-	
+
 	def set_cover(self, img):
 		self.album_cover_label.configure(image = img)
 		self.album_cover_label.image = img
-	
+
 	def changed_volume(self, *_):
 		spotify_wrapper.set_volume(self.volume.get())
-	
+
 	def changed_track_progress(self, *_):
 		spotify_wrapper.set_track_progress(self.current_track_progress.get())
-	
+
 	def update_current_track(self):
 		if not self.active:
 			return
@@ -92,20 +97,22 @@ class CurrentPlaybackFrame:
 				self.total_track_time_string.set(playback.duration())
 				album = playback.album()
 				self.set_current_track_name(name)
-				self.current_album_name.set("Album: " + album.name() + " (Track: " + str(playback.track_number()) + "/" + str(album.number_of_tracks()) + ")")
+
+				album_string = f"Album: {album.name()} (Track: {playback.track_number()}/{album.number_of_tracks()})"
+				self.current_album_name.set(album_string)
 				self.current_artist_name.set("Artist: " + playback.artist().name())
 				self.set_cover(spotify_wrapper.get_album_cover(album, self.cover_size))
-	
+
 	def get_current_track_name(self):
 		return self.playback_button_frame.current_track_name.get()
-	
+
 	def set_current_track_name(self, value):
 		return self.playback_button_frame.current_track_name.set(value)
-	
+
 	def update_current_track_loop(self):
 		self.update_current_track()
 		self.root.after(1000, self.update_current_track_loop)
-	
+
 	def set_active(self, new_active):
 		if not self.active and new_active:
 			self.update_current_track()

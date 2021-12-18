@@ -22,7 +22,7 @@ class CurrentPlaylistFrame:
 
 	def grid(self, **args):
 		self.frame.grid(args)
-	
+
 	def save_dict(self):
 		return {'name' : self.name_entry.get(), 'undo_stack' : self.undo_stack, 'redo_stack' : self.redo_stack}
 
@@ -34,24 +34,24 @@ class CurrentPlaylistFrame:
 
 	def name_changed(self, *_):
 		self.editor.name_changed()
-	
+
 	def save_current_position(self):
 		self.undo_stack.append(self.name_entry.get())
 		if len(self.undo_stack) > 50:
 			self.undo_stack = self.undo_stack[-50:]
 		self.redo_stack = []
 		self.set_undo_redo_button_state()
-	
-	def set_button_state(self, button, list):
-		if len(list):
+
+	def set_button_state(self, button, stack):
+		if len(stack):
 			button.state(['!disabled'])
 		else:
 			button.state(['disabled'])
-	
+
 	def set_undo_redo_button_state(self):
 		self.set_button_state(self.back_button, self.undo_stack)
 		self.set_button_state(self.forward_button, self.redo_stack)
-	
+
 	def go_back(self):
 		self.redo_stack.append(self.name_entry.get())
 		new_playlist = self.undo_stack.pop()

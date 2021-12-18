@@ -1,7 +1,4 @@
-from pathlib import Path
-import os
-
-from tkinter import N, W, S, E, ttk, messagebox
+from tkinter import N, W, S, E, ttk
 
 from arkhesPlaylists import ArkhesPlaylists
 from playlistNameEntry import PlaylistNameEntry
@@ -23,12 +20,12 @@ class TargetPlaylistFrame:
 
 	def grid(self, **args):
 		self.frame.grid(args)
-	
+
 	def add_playlist(self):
 		item = spotify_wrapper.get_resource(spotify_wrapper.resource_type + ':' + self.name_entry.get())
 		ArkhesPlaylists.add_item_to_playlist(self.editor.get_current_name(), item)
 		self.editor.name_changed()
-	
+
 	def rename_playlist(self):
 		ArkhesPlaylists(self.editor.get_current_name(), self.name_entry.get())
 		self.editor.name_changed()

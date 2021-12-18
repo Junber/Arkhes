@@ -26,10 +26,10 @@ class PlaybackButtonFrame:
 		CreateToolTip(self.go_forward_album_button, "Go to next album")
 
 		self.frame.columnconfigure(2, weight=1)
-	
+
 	def grid(self, **args):
 		self.frame.grid(args)
-	
+
 	def set_album_navigation_enabled(self, state):
 		if state:
 			self.go_back_album_button.state(['!disabled'])
@@ -51,6 +51,6 @@ class PlaybackButtonFrame:
 
 	def go_forward_track(self, *_):
 		spotify_wrapper.go_forward_track()
-	
+
 	def pause(self, *_):
 		spotify_wrapper.toggle_pause()

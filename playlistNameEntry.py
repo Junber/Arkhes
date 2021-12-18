@@ -14,9 +14,9 @@ class PlaylistNameEntry:
 
 	def bind_return(self, func):
 		self.playlist_name_entry.bind('<Return>', (lambda _: func()))
-	
+
 	def set(self, name):
 		self.playlist_name.set(name)
-		
+
 	def get(self):
 		return self.playlist_name.get()

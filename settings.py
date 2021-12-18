@@ -8,7 +8,7 @@ class Settings:
 		self.settings_frame = ttk.Labelframe(root, text='Update', padding='5 5 5 5')
 		self.settings_frame.grid(column=0, row=0, sticky=(N, S, W, E))
 
-		ttk.Button(self.settings_frame, text='Complete Cache', command=self.clear_cache, width=0).grid(column=0, row=0, sticky=(S, N, W, E))
+		ttk.Button(self.settings_frame, text='Complete Cache', command=SpotifyWrapper.clear_cache, width=0).grid(column=0, row=0, sticky=(S, N, W, E))
 
 		saved_frame = ttk.Frame(self.settings_frame)
 		saved_frame.grid(column=0, row=1, sticky=(S, N, W, E))
@@ -20,13 +20,10 @@ class Settings:
 
 	def save_dict(self):
 		return {}
-	
+
 	def load_from(self, _: dict):
 		pass
 
-	def clear_cache(self):
-		SpotifyWrapper.clear_cache()
-	
 	def update_saved_albums(self):
 		spotify_wrapper.reload_saved_albums_cache()
 
