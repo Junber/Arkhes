@@ -45,12 +45,12 @@ class ResourceList:
 
 		self.sort_frame = ttk.Frame(self.outer_frame, padding='0 0 0 5')
 		self.sort_frame.grid(column=0, row=0, sticky=(N, S, W, E))
-		self.albums_frame = ttk.Frame(self.outer_frame, padding='0 0 0 10')
-		self.albums_frame.grid(column=0, row=1, sticky=(N, S, W, E))
+		self.list_frame = ttk.Frame(self.outer_frame, padding='0 0 0 10')
+		self.list_frame.grid(column=0, row=1, sticky=(N, S, W, E))
 		self.navigation_frame = ttk.Frame(self.outer_frame, padding='0 0 0 0')
 		self.navigation_frame.grid(column=0, row=2, sticky=(N, S, W, E))
 
-		self.albums_frame.columnconfigure(0, weight=1)
+		self.list_frame.columnconfigure(0, weight=1)
 		self.outer_frame.columnconfigure(0, weight=1)
 		self.outer_frame.rowconfigure(1, weight=1)
 
@@ -135,7 +135,7 @@ class ResourceList:
 	def add_button(self, resource: ArkhesResource, x: int, y: int, text: str, width: int,
 		command: callable, tooltip_text: str, disabled: bool) -> None:
 
-		button = ttk.Button(self.albums_frame, text=text, style=resource.type()+'.TButton', width = width)
+		button = ttk.Button(self.list_frame, text=text, style=resource.type()+'.TButton', width = width)
 		button.configure(command = command)
 		button.grid(column = x, row = y, sticky = (W, E))
 		button.grid_configure(padx=1, pady=1)
@@ -146,7 +146,7 @@ class ResourceList:
 			button.state(['disabled'])
 
 	def add_button_row(self, resource: ArkhesResource, album_num: int, y: int) -> None:
-		button = ttk.Button(self.albums_frame, text=self.clamp_name(resource.name()),
+		button = ttk.Button(self.list_frame, text=self.clamp_name(resource.name()),
 			style=resource.type()+'.TButton', width=self.name_length + 2)
 		button.configure(command = partial(self.album_clicked_callback, resource))
 		button.grid(column = 0, row = y, sticky = (W, E))
@@ -177,8 +177,8 @@ class ResourceList:
 		self.old_buttons.clear()
 
 	def clear_buttons(self) -> None:
-		self.old_buttons = self.albums_frame.winfo_children()
-		self.albums_frame.after(20, self.destory_old_buttons) # Delay reduces flickering somewhat
+		self.old_buttons = self.list_frame.winfo_children()
+		self.list_frame.after(20, self.destory_old_buttons) # Delay reduces flickering somewhat
 
 	def update_with_albums(self, albums: list) -> None:
 		self.clear_buttons()

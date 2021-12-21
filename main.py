@@ -22,12 +22,17 @@ class Window:
 		self.root.title('Arkhes')
 		self.root.protocol('WM_DELETE_WINDOW', self.close)
 
+		self.root.tk.call("source", "theme/azure.tcl")
+		self.root.tk.call("set_theme", "dark")
+
 		self.focused = True
 
 		self.root.columnconfigure(0, weight=1)
 		self.root.rowconfigure(0, weight=1)
 
 		style = ttk.Style()
+		for widget_type in ['TButton', 'TCombobox', 'TLabel', 'TEntry']:
+			style.configure(widget_type, font=('', 5))
 		style.configure('album.TButton', foreground='green')
 		style.configure('playlist.TButton', foreground='red')
 		style.configure(spotify_wrapper.resource_type + '.TButton', foreground='blue')

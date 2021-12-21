@@ -2,6 +2,8 @@
 
 A tool for creating and playing hierarchical spotify playlists
 
+Uses the [Azure theme for ttk](https://github.com/rdbende/Azure-ttk-theme).
+
 WIP
 
 Dependencies:
