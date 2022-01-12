@@ -6,8 +6,9 @@ WIP
 
 Dependencies:
 
+- tkinter
 - spotipy
-- pillow
+- pillow (pil.imagetk might need to be install seperately)
 - (googleapi)
 
 ## Planned:
