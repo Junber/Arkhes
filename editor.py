@@ -1,6 +1,7 @@
 import tkinter
 from tkinter import N, W, S, E, ttk, messagebox, simpledialog
 from typing import Callable
+import currentPlaybackFrame
 
 from currentPlaylistFrame import CurrentPlaylistFrame
 from resources import ArkhesResource
@@ -34,7 +35,7 @@ class Editor:
 		self.categorization_view.trace_add('write', self.changed_categorization_view)
 		ttk.Checkbutton(self.settings_frame, text='Show uncategorized items', variable=self.categorization_view).grid(column=0, columnspan=6, row=2, sticky=(S, N, W, E))
 
-		self.album_list = ResourceList(root, self, 'Contents', 24, self.open_item,
+		self.album_list = ResourceList(root, self, 'Contents', 20, self.open_item,
 			[
 				[lambda item, _: str(item.rating()), self.set_rating],
 				["Play", self.play],
@@ -86,6 +87,9 @@ class Editor:
 		self.album_contents_frame.columnconfigure(0, weight=1)
 		self.album_contents_frame.rowconfigure(1, weight=1)
 
+		self.current_playback_frame = currentPlaybackFrame.CurrentPlaybackFrame(root, self, 160)
+		self.show_playback(True)
+
 		self.name_changed()
 		self.update_saved_album_list()
 		self.update_saved_playlists_list()
@@ -96,7 +100,7 @@ class Editor:
 		frame = ttk.Frame(self.notebook, padding='4 5 4 5')
 		self.notebook.add(frame, text=name)
 
-		saved_list = ResourceList(frame, self, '', 24, self.open_item,
+		saved_list = ResourceList(frame, self, '', 20, self.open_item,
 			[
 				["Play", self.play],
 				["Add", self.add_item],
@@ -266,3 +270,12 @@ class Editor:
 
 	def set_target_name(self, name: str) -> None:
 		self.target_playlist_frame.name_entry.set(name)
+
+	def show_playback(self, value: bool) -> None:
+		if value:
+			self.current_playback_frame.grid(column=0, row=5, columnspan=5, sticky=(N, S, W, E))
+		else:
+			self.current_playback_frame.grid_forget()
+
+	def update_playback_position(self, current_song_uri: str) -> None:
+		pass

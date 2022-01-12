@@ -1,15 +1,17 @@
+from __future__ import annotations
 import tkinter
 from tkinter import N, W, S, E, ttk, HORIZONTAL
+import editor
+import player
 
 from spotifyWrapper import spotify_wrapper
 from playbackButtonFrame import PlaybackButtonFrame
 
 class CurrentPlaybackFrame:
-	cover_size = 320
-
-	def __init__(self, root, player):
+	def __init__(self, root: tkinter.Widget, master : player.Player | editor.Editor, cover_size):
+		self.cover_size = cover_size
 		self.root = root
-		self.player = player
+		self.master = master
 		self.active = True
 
 		self.frame = ttk.Labelframe(root, text='Current Playback', padding='5 5 5 5')
@@ -27,7 +29,7 @@ class CurrentPlaybackFrame:
 		self.current_artist_label = ttk.Label(self.frame, textvar=self.current_artist_name, anchor='center')
 		self.current_artist_label.grid(column=1, row=2, sticky=(S, W, E))
 
-		self.playback_button_frame = PlaybackButtonFrame(self.frame, self.player)
+		self.playback_button_frame = PlaybackButtonFrame(self.frame, self.master)
 		self.playback_button_frame.grid(column=1, row=3, sticky=(S, W, E))
 
 		self.current_track_progress_frame = tkinter.Frame(self.frame)
@@ -70,9 +72,12 @@ class CurrentPlaybackFrame:
 	def grid(self, **args):
 		self.frame.grid(args)
 
+	def grid_forget(self):
+		self.frame.grid_forget()
+
 	def set_cover(self, img):
 		self.album_cover_label.configure(image = img)
-		self.album_cover_label.image = img
+		self.image = img
 
 	def changed_volume(self, *_):
 		spotify_wrapper.set_volume(self.volume.get())
@@ -87,12 +92,12 @@ class CurrentPlaybackFrame:
 		playback = spotify_wrapper.get_current_playback()
 		if playback is not None and not playback.is_none():
 			self.current_track_progress.set(playback.progress_ms()) # TODO: Make smoother
-			self.current_track_progress_string.set(playback.progress())
+			self.current_track_progress_string.set(str(playback.progress()))
 			self.volume.set(playback.volume())
 
 			name = playback.name()
 			if name != self.get_current_track_name():
-				self.player.update_playback_position(playback.uri())
+				self.master.update_playback_position(playback.uri())
 				self.current_track_progress_scale.configure(to=playback.duration_ms())
 				self.total_track_time_string.set(playback.duration())
 				album = playback.album()

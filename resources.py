@@ -106,7 +106,7 @@ class Song(ArkhesResource):
 		return self._data_dict['duration_ms']
 
 	def duration(self) -> datetime.timedelta:
-		return datetime.timedelta(milliseconds=self.duration_ms())
+		return datetime.timedelta(seconds=int(self.duration_ms()/1000))
 
 	def album(self) -> Album:
 		return Album(self._data_dict['album'])
@@ -139,7 +139,7 @@ class Playback(Song):
 		return self._base_data_dict['progress_ms']
 
 	def progress(self) -> datetime.timedelta:
-		return datetime.timedelta(milliseconds=self.progress_ms())
+		return datetime.timedelta(seconds=int(self.progress_ms()/1000))
 
 	def volume(self) -> int:
 		return self._base_data_dict['device']['volume_percent']

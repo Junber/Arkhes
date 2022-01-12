@@ -8,7 +8,7 @@ from spotifyWrapper import spotify_wrapper
 from arkhesPlaylists import ArkhesPlaylists
 from resourceList import ResourceList
 from currentPlaylistFrame import CurrentPlaylistFrame
-from currentPlaybackFrame import CurrentPlaybackFrame
+import currentPlaybackFrame
 
 class Player:
 	def __init__(self, root: ttk.Widget) -> None:
@@ -32,7 +32,7 @@ class Player:
 		self.album_list = ResourceList(root, self, 'Contents', 10, self.clicked_album)
 		self.album_list.grid(column=1, row=0, rowspan=3, sticky=(N, W, E, S))
 
-		self.current_playback_frame = CurrentPlaybackFrame(self.root, self)
+		self.current_playback_frame = currentPlaybackFrame.CurrentPlaybackFrame(self.root, self, 320)
 		self.current_playback_frame.grid(column=0, row=3, columnspan=2, sticky=(N, S, W, E))
 
 		for thing in [root, shuffle_frame]:

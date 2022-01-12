@@ -37,7 +37,7 @@ class Window:
 
 		self.player = Player(self.add_mainframe('Play'))
 		self.editor = Editor(self.add_mainframe('Edit'))
-		self.settings = Settings(self.add_mainframe('Settings'))
+		self.settings = Settings(self.add_mainframe('Settings'), self.editor)
 
 		self.notebook.bind('<<NotebookTabChanged>>', self.tab_changed)
 		self.root.bind('<FocusIn>', lambda _: self.focus_changed(True))
@@ -94,4 +94,4 @@ class Window:
 		return mainframe
 
 if __name__ == '__main__':
-	Window()
+	main = Window()
