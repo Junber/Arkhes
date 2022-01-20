@@ -27,7 +27,7 @@ class FileUtils:
 			file.seek(0)
 			file.truncate()
 			line_number = 0
-			saved_line = ""
+			saved_line = ''
 			for line in lines:
 				if line_number == line_number_to_move:
 					saved_line = line

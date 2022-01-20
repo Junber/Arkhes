@@ -103,9 +103,9 @@ class CurrentPlaybackFrame:
 				album = playback.album()
 				self.set_current_track_name(name)
 
-				album_string = f"Album: {album.name()} (Track: {playback.track_number()}/{album.number_of_tracks()})"
+				album_string = f'Album: {album.name()} (Track: {playback.track_number()}/{album.number_of_tracks()})'
 				self.current_album_name.set(album_string)
-				self.current_artist_name.set("Artist: " + playback.artist().name())
+				self.current_artist_name.set('Artist: ' + playback.artist().name())
 				self.set_cover(spotify_wrapper.get_album_cover(album, self.cover_size))
 
 	def get_current_track_name(self):

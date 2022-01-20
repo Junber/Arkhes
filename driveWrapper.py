@@ -69,7 +69,7 @@ class DriveWrapper:
 			done = False
 			while done is False:
 				status, done = downloader.next_chunk()
-				print(f"Download {path} {int(status.progress() * 100)}%.")
+				print(f'Download {path} {int(status.progress() * 100)}%.')
 
 	def download_all(self, path):
 		for file in self.get_files():

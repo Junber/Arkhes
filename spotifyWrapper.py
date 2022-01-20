@@ -1,4 +1,6 @@
+from __future__ import annotations
 import os
+import time
 from pathlib import Path
 import json
 import requests
@@ -7,7 +9,7 @@ from PIL import ImageTk, Image
 import spotipy
 from spotipy.oauth2 import SpotifyPKCE
 
-from resources import ArkhesPlaylist, Playback, ArkhesResource, Album, SpotifyPlaylist, Song, Artist
+import resources
 
 class SpotifyWrapper:
 	prefix = 'arkhes:'
@@ -40,7 +42,6 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 		self.uncategorized_artists = []
 
 		self.current_country_code = self.spotify.me()['country']
-		self.load_cache()
 
 	def add_categorized_uri(self, uri):
 		if uri not in self.categorizations:
@@ -79,7 +80,7 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 			new_albums = self.spotify.current_user_saved_albums(limit=50, offset=len(self.saved_albums_cache))['items']
 			if len(new_albums) == 0:
 				break
-			self.saved_albums_cache.extend([Album(album['album']) for album in new_albums])
+			self.saved_albums_cache.extend([resources.Album(album['album']) for album in new_albums])
 
 		self.set_uncategorized_albums()
 
@@ -88,7 +89,7 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 			new_playlists = self.spotify.current_user_playlists(limit=50, offset=len(self.saved_playlists_cache))['items']
 			if len(new_playlists) == 0:
 				break
-			self.saved_playlists_cache.extend([SpotifyPlaylist(item) for item in new_playlists])
+			self.saved_playlists_cache.extend([resources.SpotifyPlaylist(item) for item in new_playlists])
 
 		self.set_uncategorized_playlists()
 
@@ -97,7 +98,7 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 			new_songs = self.spotify.current_user_saved_tracks(limit=50, offset=len(self.saved_songs_cache))['items']
 			if len(new_songs) == 0:
 				break
-			self.saved_songs_cache.extend([Song(song['track']) for song in new_songs])
+			self.saved_songs_cache.extend([resources.Song(song['track']) for song in new_songs])
 
 		self.set_uncategorized_songs()
 
@@ -111,7 +112,7 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 
 			if len(new_artists) == 0:
 				break
-			self.saved_artists_cache.extend([Artist(item) for item in new_artists])
+			self.saved_artists_cache.extend([resources.Artist(item) for item in new_artists])
 
 		self.set_uncategorized_artists()
 
@@ -126,6 +127,9 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 		self.set_uncategorized_artists()
 
 	def load_cache(self):
+		print('Loading cache...', end=' ')
+		start_time = time.perf_counter()
+
 		self.saved_albums_cache = []
 		self.saved_playlists_cache = []
 		self.saved_songs_cache = []
@@ -150,6 +154,8 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 			self.load_saved_playlists()
 			self.load_saved_songs()
 			self.load_saved_artists()
+
+		print('took ', round(time.perf_counter() - start_time, 2), 's', sep='')
 
 	def save_cache(self):
 		with open(self.cache_file_name, 'w', encoding='utf8') as file:
@@ -199,13 +205,13 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 			for offset in range(0, len(uris), step_size):
 				new_albums = self.spotify.albums(uris[offset : offset + step_size])
 				for uri, album in zip(uris[offset : offset + step_size], new_albums['albums']):
-					self.resource_cache[uri] = Album(album)
+					self.resource_cache[uri] = resources.Album(album)
 
 	def cache_songs(self, uris):
 		if len(uris) > 0:
 			new_songs = self.spotify.tracks(uris)
 			for uri, song in zip(uris, new_songs['tracks']):
-				self.resource_cache[uri] = Song(song)
+				self.resource_cache[uri] = resources.Song(song)
 
 	def cache_artists(self, uris):
 		if len(uris) > 0:
@@ -218,35 +224,35 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 						break
 					albums.extend(new_albums)
 				artist['albums'] = albums
-				self.resource_cache[uri] = Artist(artist)
+				self.resource_cache[uri] = resources.Artist(artist)
 
 	def cache_spotify_playlists(self, uris):
 		if len(uris) > 0:
 			for uri in uris:
 				playlist = self.spotify.playlist(uri)
-				self.resource_cache[uri] = SpotifyPlaylist(playlist)
+				self.resource_cache[uri] = resources.SpotifyPlaylist(playlist)
 
 	@staticmethod
-	def is_album_uri(uri):
+	def is_album_uri(uri: str) -> bool:
 		return uri.startswith('https://open.spotify.com/album/') or uri.startswith('spotify:album:')
 
 	@staticmethod
-	def is_song_uri(uri):
+	def is_song_uri(uri: str) -> bool:
 		return uri.startswith('https://open.spotify.com/track/') or uri.startswith('spotify:track:')
 
 	@staticmethod
-	def is_artist_uri(uri):
+	def is_artist_uri(uri: str) -> bool:
 		return uri.startswith('https://open.spotify.com/artist/') or uri.startswith('spotify:artist:')
 
 	@staticmethod
-	def is_spotify_playlist_uri(uri):
+	def is_spotify_playlist_uri(uri: str) -> bool:
 		return uri.startswith('https://open.spotify.com/playlist/') or uri.startswith('spotify:playlist:')
 
 	@staticmethod
-	def is_arkhes_playlist_uri(uri):
+	def is_arkhes_playlist_uri(uri: str) -> bool:
 		return uri.startswith(SpotifyWrapper.prefix)
 
-	def current_country(self): # TODO: Use more often or never probably
+	def current_country(self) -> str: # TODO: Use more often or never probably
 		return self.current_country_code
 
 	def cache_uncached_albums(self, uris: list):  # TODO: Also do that for playlists, songs, etc
@@ -256,7 +262,7 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 				uncached.append(uri)
 		self.cache_albums(uncached)
 
-	def get_resource(self, uri: str) -> ArkhesResource:
+	def get_resource(self, uri: str) -> resources.ArkhesResource:
 		if not uri in self.resource_cache:
 			if self.is_album_uri(uri):
 				self.cache_albums([uri])
@@ -267,27 +273,27 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 			elif self.is_spotify_playlist_uri(uri):
 				self.cache_spotify_playlists([uri])
 			elif self.is_arkhes_playlist_uri(uri):
-				return ArkhesPlaylist({'name' : uri[len(self.prefix):].strip(), 'type' : self.resource_type, 'uri' : uri, 'popularity' : 0}) #TODO
+				return resources.ArkhesPlaylist({'name' : uri[len(self.prefix):].strip(), 'type' : self.resource_type, 'uri' : uri, 'popularity' : 0}) #TODO
 			else:
-				return ArkhesResource({})
+				return resources.ArkhesResource({})
 
 		return self.resource_cache[uri]
 
-	def create_resource(self, dct: dict) -> ArkhesResource:
+	def create_resource(self, dct: dict) -> resources.ArkhesResource:
 		if self.is_album_uri(dct['uri']):
-			return Album(dct)
+			return resources.Album(dct)
 		elif self.is_song_uri(dct['uri']):
-			return Song(dct)
+			return resources.Song(dct)
 		elif self.is_artist_uri(dct['uri']):
-			return Artist(dct)
+			return resources.Artist(dct)
 		elif self.is_spotify_playlist_uri(dct['uri']):
-			return SpotifyPlaylist(dct)
+			return resources.SpotifyPlaylist(dct)
 		elif self.is_arkhes_playlist_uri(dct['uri']):
-			return ArkhesPlaylist(dct)
+			return resources.ArkhesPlaylist(dct)
 
 	def play_uris(self, uris):
 		if len(uris) > 750:
-			uris = uris[:750] # Prevent "Request Entity Too Large"
+			uris = uris[:750] # Prevent 'Request Entity Too Large'
 		self.spotify.start_playback(device_id=self.get_device_id(), uris=uris)
 
 	def go_back_track(self):
@@ -331,7 +337,7 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 		self.spotify.shuffle(should_shuffle, device_id=self.get_device_id())
 
 	def play(self, uri):
-		if SpotifyWrapper.is_album_uri(uri) or SpotifyWrapper.is_spotify_playlist_uri(uri) or SpotifyWrapper.is_artist_uri(uri):
+		if self.is_album_uri(uri) or self.is_spotify_playlist_uri(uri) or self.is_artist_uri(uri):
 			self.spotify.start_playback(context_uri=uri, device_id=self.get_device_id())
 		else:
 			self.play_uris([uri])
@@ -342,34 +348,66 @@ user-library-modify user-follow-read user-follow-modify user-read-private'
 	def set_track_progress(self, progress):
 		self.spotify.seek_track(int(progress), device_id=self.get_device_id())
 
-	def remove_saved_album(self, uri):
-		self.spotify.current_user_saved_albums_delete([uri])
-		self.saved_albums_cache = [i for i in self.saved_albums_cache if i['uri'] != uri]
-		self.uncategorized_albums = [i for i in self.uncategorized_albums if i['uri'] != uri]
+	def remove_saved_album(self, resource: resources.ArkhesResource) -> None:
+		self.spotify.current_user_saved_albums_delete([resource.uri()])
+		self.saved_albums_cache = [i for i in self.saved_albums_cache if i != resource]
+		self.uncategorized_albums = [i for i in self.uncategorized_albums if i != resource]
 
-	def remove_saved_playlist(self, uri):
-		self.spotify.current_user_unfollow_playlist(self.get_resource(uri)['name'])
-		self.saved_playlists_cache = [i for i in self.saved_playlists_cache if i['uri'] != uri]
-		self.uncategorized_playlists = [i for i in self.uncategorized_playlists if i['uri'] != uri]
+	def remove_saved_playlist(self, resource: resources.ArkhesResource) -> None:
+		self.spotify.current_user_unfollow_playlist(resource.name())
+		self.saved_playlists_cache = [i for i in self.saved_playlists_cache if i != resource]
+		self.uncategorized_playlists = [i for i in self.uncategorized_playlists if i != resource]
 
-	def remove_saved_song(self, uri):
-		self.spotify.current_user_unfollow_playlist(self.get_resource(uri)['name'])
-		self.saved_songs_cache = [i for i in self.saved_songs_cache if i['uri'] != uri]
-		self.uncategorized_songs = [i for i in self.uncategorized_songs if i['uri'] != uri]
+	def remove_saved_song(self, resource: resources.ArkhesResource) -> None:
+		self.spotify.current_user_saved_tracks_delete([resource.uri()])
+		self.saved_songs_cache = [i for i in self.saved_songs_cache if i != resource]
+		self.uncategorized_songs = [i for i in self.uncategorized_songs if i != resource]
 
-	def remove_saved_artist(self, uri):
-		self.spotify.user_unfollow_artists(self.get_resource(uri)['name'])
-		self.saved_artists_cache = [i for i in self.saved_artists_cache if i['uri'] != uri]
-		self.uncategorized_artists = [i for i in self.uncategorized_artists if i['uri'] != uri]
+	def remove_saved_artist(self, resource: resources.ArkhesResource) -> None:
+		self.spotify.user_unfollow_artists([resource.id()])
+		self.saved_artists_cache = [i for i in self.saved_artists_cache if i != resource]
+		self.uncategorized_artists = [i for i in self.uncategorized_artists if i != resource]
 
-	def get_current_playback(self):
+	def add_saved_album(self, resource: resources.ArkhesResource) -> None:
+		self.spotify.current_user_saved_albums_add([resource.uri()])
+		self.saved_albums_cache.append(resource)
+		self.uncategorized_albums.append(resource)
+
+	def add_saved_playlist(self, resource: resources.ArkhesResource) -> None:
+		self.spotify.current_user_follow_playlist(resource.id())
+		self.saved_playlists_cache.append(resource)
+		self.uncategorized_playlists.append(resource)
+
+	def add_saved_song(self, resource: resources.ArkhesResource) -> None:
+		self.spotify.current_user_saved_tracks_add([resource.uri()])
+		self.saved_songs_cache.append(resource)
+		self.uncategorized_songs.append(resource)
+
+	def add_saved_artist(self, resource: resources.ArkhesResource) -> None:
+		self.spotify.user_follow_artists([resource.id()])
+		self.saved_artists_cache.append(resource)
+		self.uncategorized_artists.append(resource)
+
+	def is_saved_album(self, resource: resources.ArkhesResource) -> bool:
+		return resource in self.saved_albums_cache
+
+	def is_saved_playlist(self, resource: resources.ArkhesResource) -> bool:
+		return resource in self.saved_playlists_cache
+
+	def is_saved_song(self, resource: resources.ArkhesResource) -> bool:
+		return resource in self.saved_songs_cache
+
+	def is_saved_artist(self, resource: resources.ArkhesResource) -> bool:
+		return resource in self.saved_artists_cache
+
+	def get_current_playback(self) -> resources.Playback | None:
 		playback = self.spotify.current_playback()
 		if playback:
-			return Playback(playback)
+			return resources.Playback(playback)
 		else:
 			return None
 
-	def get_album_cover(self, album: Album, size: int) -> ImageTk.PhotoImage:
+	def get_album_cover(self, album: resources.Album, size: int) -> ImageTk.PhotoImage:
 		path = os.path.join(self.cover_cache_location, album.spotify_id() + '.jpg')
 
 		if not Path(path).is_file():

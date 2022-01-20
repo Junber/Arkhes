@@ -1,4 +1,5 @@
 import os
+import time
 from tkinter import N, W, S, E, ttk
 import tkinter
 from pathlib import Path
@@ -17,6 +18,9 @@ class Window:
 	def __init__(self):
 		os.makedirs(ArkhesPlaylists.playlist_location, exist_ok=True)
 		os.makedirs(spotify_wrapper.cover_cache_location, exist_ok=True)
+
+		print('Building UI...', end=' ')
+		start_time = time.perf_counter()
 
 		self.root = tkinter.Tk()
 		self.root.title('Arkhes')
@@ -43,6 +47,9 @@ class Window:
 		self.root.bind('<FocusIn>', lambda _: self.focus_changed(True))
 		self.root.bind('<FocusOut>', lambda _: self.focus_changed(False))
 
+		print('took ', round(time.perf_counter() - start_time, 2), 's', sep='')
+
+		spotify_wrapper.load_cache()
 		self.load()
 		self.root.mainloop()
 
@@ -53,6 +60,9 @@ class Window:
 
 	def load(self):
 		if Path(self.save_file_name).is_file():
+			print('Loading...', end=' ')
+			start_time = time.perf_counter()
+
 			dct = None
 			with open(self.save_file_name, 'r', encoding='utf8') as file:
 				dct = json.loads(file.readline())
@@ -61,6 +71,8 @@ class Window:
 			self.player.load_from(dct['player'])
 			self.editor.load_from(dct['editor'])
 			self.settings.load_from(dct['settings'])
+
+			print('took ', round(time.perf_counter() - start_time, 2), 's', sep='')
 
 	def save(self):
 		save_string = json.dumps(
@@ -75,7 +87,7 @@ class Window:
 			file.write(save_string)
 
 	def set_player_active_flag(self):
-		self.player.set_active(self.focused and (self.notebook.index("current") == 0))
+		self.player.set_active(self.focused and (self.notebook.index('current') == 0))
 
 	def tab_changed(self, _):
 		self.player.name_changed()

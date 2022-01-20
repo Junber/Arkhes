@@ -1,13 +1,15 @@
 from __future__ import annotations
 import datetime
 import itertools
+from tkinter import messagebox
 from typing import List
 import arkhesPlaylists
+from spotifyWrapper import spotify_wrapper
 
 class ArkhesResource:
 	def __init__(self, data_dict: dict) -> None:
 		self._data_dict = data_dict
-		self._line = ""
+		self._line = ''
 		self._line_number = -1
 		self._rating = -1
 
@@ -18,7 +20,7 @@ class ArkhesResource:
 		if self.rating() < 0:
 			return self.uri()
 		else:
-			return f"{self.uri()} {self.rating()}"
+			return f'{self.uri()} {self.rating()}'
 
 	def line(self) -> str:
 		return self._line
@@ -48,6 +50,9 @@ class ArkhesResource:
 	def uri(self) -> str:
 		return self._data_dict['uri']
 
+	def id(self) -> str:
+		return self._data_dict['id']
+
 	def contents(self) -> List[ArkhesResource]:
 		return []
 
@@ -61,7 +66,37 @@ class ArkhesResource:
 		return self._data_dict['popularity']
 
 	def description(self) -> str:
-		return "[No Description]"
+		return '[No Description]'
+
+	def type_name(self) -> str:
+		return '[None]'
+
+	def save_unasked(self) -> None:
+		pass
+
+	def unsave_unasked(self) -> None:
+		pass
+
+	def save(self) -> bool:
+		result = messagebox.askyesno('Delete', f'Do you really want to add {self.name()} to your saved {self.type_name()}s on Spotify?')
+		if result:
+			self.save_unasked()
+		return result
+
+	def unsave(self) -> bool:
+		result = messagebox.askyesno('Delete', f'Do you really want to remove {self.name()} from your saved {self.type_name()}s on Spotify?')
+		if result:
+			self.unsave_unasked()
+		return result
+
+	def is_saved(self) -> bool:
+		return False
+
+	def toggle_saved(self) -> bool:
+		if self.is_saved():
+			return self.unsave()
+		else:
+			return self.save()
 
 	@staticmethod
 	def flatten(uris: list) -> list:
@@ -82,11 +117,36 @@ class Album(ArkhesResource):
 		return Artist(self._data_dict['artists'][0])  #TODO: Handle multiple artists
 
 	def description(self) -> str:
-		return f"[Album]\n{self.name()}\nArtist: {self.artist().name()}\nRelease Date: {self.release_date()}"
+		return f'[Album]\n{self.name()}\nArtist: {self.artist().name()}\nRelease Date: {self.release_date()}'
+
+	def type_name(self) -> str:
+		return 'album'
+
+	def save_unasked(self) -> None:
+		spotify_wrapper.add_saved_album(self)
+
+	def unsave_unasked(self) -> None:
+		spotify_wrapper.remove_saved_album(self)
+
+	def is_saved(self) -> bool:
+		return spotify_wrapper.is_saved_album(self)
+
 
 class SpotifyPlaylist(ArkhesResource):
 	def contents(self) -> List[ArkhesResource]:
 		return [Song(track['track']) for track in self._data_dict['tracks']['items']]
+
+	def type_name(self) -> str:
+		return 'spotify playlist'
+
+	def save_unasked(self) -> None:
+		spotify_wrapper.add_saved_playlist(self)
+
+	def unsave_unasked(self) -> None:
+		spotify_wrapper.remove_saved_playlist(self)
+
+	def is_saved(self) -> bool:
+		return spotify_wrapper.is_saved_playlist(self)
 
 class Artist(ArkhesResource):
 	def contents(self) -> List[ArkhesResource]:
@@ -96,7 +156,19 @@ class Artist(ArkhesResource):
 		return ArkhesResource.flatten([resource.track_uris() for resource in self.contents()])
 
 	def description(self) -> str:
-		return f"[nArtist]\n{self.name()}\nRelease Date: {self.release_date()}"
+		return f'[Artist]\n{self.name()}\nRelease Date: {self.release_date()}'
+
+	def type_name(self) -> str:
+		return 'artist'
+
+	def save_unasked(self) -> None:
+		spotify_wrapper.add_saved_artist(self)
+
+	def unsave_unasked(self) -> None:
+		spotify_wrapper.remove_saved_artist(self)
+
+	def is_saved(self) -> bool:
+		return spotify_wrapper.is_saved_artist(self)
 
 class Song(ArkhesResource):
 	def contents(self) -> List[ArkhesResource]:
@@ -119,6 +191,18 @@ class Song(ArkhesResource):
 
 	def track_number(self) -> int:
 		return self._data_dict['track_number']
+
+	def type_name(self) -> str:
+		return 'song'
+
+	def save_unasked(self) -> None:
+		spotify_wrapper.add_saved_song(self)
+
+	def unsave_unasked(self) -> None:
+		spotify_wrapper.remove_saved_song(self)
+
+	def is_saved(self) -> bool:
+		return spotify_wrapper.is_saved_song(self)
 
 class ArkhesPlaylist(ArkhesResource):
 	def contents(self) -> List[ArkhesResource]:

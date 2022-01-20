@@ -9,9 +9,9 @@ class CreateToolTip():
 		self.wrap_length = 360   #pixels
 		self.widget = widget
 		self.text = text
-		self.widget.bind("<Enter>", self.enter)
-		self.widget.bind("<Leave>", self.leave)
-		self.widget.bind("<ButtonPress>", self.leave)
+		self.widget.bind('<Enter>', self.enter)
+		self.widget.bind('<Leave>', self.leave)
+		self.widget.bind('<ButtonPress>', self.leave)
 		self.schedule_id = None
 		self.toplevel = None
 		self.motion_id = None
@@ -42,9 +42,9 @@ class CreateToolTip():
 	def showtip(self, *_) -> None:
 		self.toplevel = tkinter.Toplevel(self.widget)
 		self.toplevel.wm_overrideredirect(True)
-		self.toplevel.wm_geometry(f"+{self.x}+{self.y}")
+		self.toplevel.wm_geometry(f'+{self.x}+{self.y}')
 		label = ttk.Label(self.toplevel, text=self.text, justify='left',
-					   background="#ffffff", relief='solid', borderwidth=1,
+					   background='#ffffff', relief='solid', borderwidth=1,
 					   wraplength = self.wrap_length)
 		label.grid(column=0, row=0)
 
@@ -52,7 +52,7 @@ class CreateToolTip():
 		self.x = self.widget.winfo_rootx() + event.x + 10
 		self.y = self.widget.winfo_rooty() + event.y + 10
 		if self.toplevel:
-			self.toplevel.wm_geometry(f"+{self.x}+{self.y}")
+			self.toplevel.wm_geometry(f'+{self.x}+{self.y}')
 
 	def hidetip(self) -> None:
 		if self.toplevel:

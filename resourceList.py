@@ -61,13 +61,13 @@ class ResourceList:
 		self.current_sort.trace_add('write', self.sort_changed)
 
 		sort_names = [self.default_sort_name] + [sort_name for sort_name in self.sorts]
-		self.sort_box = ttk.Combobox(parent, state="readonly",
+		self.sort_box = ttk.Combobox(parent, state='readonly',
 			textvariable=self.current_sort, values=sort_names)
 		self.sort_box.grid(column=1, row=0, sticky=(N, S, W, E))
 
 		self.current_sort_direction = tkinter.StringVar(value=self.ascending_sort_name)
 		self.current_sort_direction.trace_add('write', self.sort_changed)
-		self.sort_direction_box = ttk.Combobox(parent, state="readonly",
+		self.sort_direction_box = ttk.Combobox(parent, state='readonly',
 			textvariable=self.current_sort_direction, values=[self.ascending_sort_name, 'Desc'])
 		self.sort_direction_box.grid(column=2, row=0, sticky=(N, S, W, E))
 
@@ -75,7 +75,7 @@ class ResourceList:
 		self.page = 0
 		self.prev_button = ttk.Button(parent, text='Prev', command=lambda: self.change_page(-1))
 		self.prev_button.grid(column=0, row=0, sticky=(N, S, W, E))
-		self.page_string = tkinter.StringVar(value="[Page]")
+		self.page_string = tkinter.StringVar(value='[Page]')
 		self.page_label = ttk.Label(parent, textvariable=self.page_string, anchor='center')
 		self.page_label.grid(column=1, row=0, sticky=(N, S, W, E))
 		self.next_button = ttk.Button(parent, text='Next', command=lambda: self.change_page(+1))
@@ -86,7 +86,7 @@ class ResourceList:
 		self.max_items_per_page_input = ttk.Entry(parent, width=3,
 			textvariable=self.max_items_per_page_string)
 		self.max_items_per_page_input.grid(column=3, row=0, sticky=(N, S, W, E))
-		CreateToolTip(self.max_items_per_page_input, "Number of items per page")
+		CreateToolTip(self.max_items_per_page_input, 'Number of items per page')
 
 		parent.columnconfigure(0, weight=1)
 		parent.columnconfigure(1, weight=1)
@@ -123,13 +123,13 @@ class ResourceList:
 		else:
 			self.next_button.state(['!disabled'])
 
-		self.page_string.set(str(self.page + 1) + " / " + str(max_page + 1))
+		self.page_string.set(str(self.page + 1) + ' / ' + str(max_page + 1))
 
 		self.update_with_albums(self.items[self.page*items_per_page : (self.page + 1)*items_per_page])
 
 	def clamp_name(self, album_name: str) -> str:
 		if len(album_name) > self.name_length:
-			return album_name[:self.name_length-3] + "..."
+			return album_name[:self.name_length-3] + '...'
 		return album_name
 
 	def add_button(self, resource: ArkhesResource, x: int, y: int, text: str, width: int,
@@ -164,7 +164,7 @@ class ResourceList:
 					text = text(resource, album_num)
 				self.add_button(resource, extra_button_index + 1, y, text, len(text) + 2,
 					partial(extra[1], resource),
-					"",
+					'',
 					len(extra) > 2 and not extra[2](resource, album_num))
 
 	def add_buttons(self, albums: list) -> None:
