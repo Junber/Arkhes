@@ -1,8 +1,8 @@
-from cProfile import label
 import tkinter
 from tkinter import N, W, S, E, ttk, simpledialog
 from typing import Callable
 import currentPlaybackFrame
+import exportFrame
 
 from currentPlaylistFrame import CurrentPlaylistFrame
 from resources import ArkhesResource
@@ -28,14 +28,8 @@ class Editor:
 		self.uri_frame = AddCurrentPlaybackFrame(self.left_frame, self)
 		self.uri_frame.grid(column=0, row=3, sticky=(W, E))
 
-		self.export_frame = ttk.Labelframe(self.left_frame, text='Export', padding='5 5 5 5')
+		self.export_frame = exportFrame.ExportFrame(self.left_frame, self)
 		self.export_frame.grid(column=0, row=4, sticky=(W, E))
-		self.export_name = tkinter.StringVar()
-		self.export_name_entry = ttk.Entry(self.export_frame, textvariable=self.export_name)
-		self.export_name_entry.grid(column=0, row=0, sticky=(S, N, W, E))
-		self.export_button = ttk.Button(self.export_frame, text='Export current playlist', command=self.export_current_playlist)
-		self.export_button.grid(column=0, row=1, sticky=(S, N, W, E))
-		self.export_frame.columnconfigure(0, weight=1)
 
 		self.settings_frame = ttk.Labelframe(self.left_frame, text='Settings', padding='5 5 5 5')
 		self.settings_frame.grid(column=0, row=5, sticky=(S, W, E))
@@ -131,13 +125,13 @@ class Editor:
 		self.contents_frame.columnconfigure(0, weight=1)
 		self.contents_frame.rowconfigure(1, weight=1)
 
-	def save_dict(self) -> None:
+	def save_dict(self) -> dict:
 		return {
 			'categorization_view' : self.categorization_view.get(),
 			'categorization_edit' : self.categorization_edit.get(),
 			'current' : self.current_playlist_frame.save_dict(),
 			'target' : self.get_target_name(),
-			'export_name' : self.export_name.get(),
+			'export_frame' : self.export_frame.save_dict(),
 			'album_list' : self.album_list.save_dict(),
 			'saved_album_list' : self.saved_album_list.save_dict(),
 			'saved_playlists_list' : self.saved_playlists_list.save_dict(),
@@ -151,7 +145,7 @@ class Editor:
 		self.categorization_edit.set(dct['categorization_edit'])
 		self.current_playlist_frame.load_from(dct['current'])
 		self.set_target_name(dct['target'])
-		self.export_name.set(dct['export_name'])
+		self.export_frame.load_from(dct['export_frame'])
 		self.album_list.load_from(dct['album_list'])
 		self.saved_album_list.load_from(dct['saved_album_list'])
 		self.saved_playlists_list.load_from(dct['saved_playlists_list'])
@@ -299,6 +293,3 @@ class Editor:
 
 	def toggle_saved_contents(self) -> None:
 		self.current_contents_resource().toggle_saved()
-
-	def export_current_playlist(self) -> None:
-		spotify_wrapper.export_playlist(ArkhesPlaylists.get_playlist(self.get_current_name()), self.export_name.get())

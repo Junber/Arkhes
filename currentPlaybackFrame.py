@@ -8,7 +8,7 @@ from spotifyWrapper import spotify_wrapper
 from playbackButtonFrame import PlaybackButtonFrame
 
 class CurrentPlaybackFrame:
-	def __init__(self, root: tkinter.Widget, master : player.Player | editor.Editor, cover_size):
+	def __init__(self, root: tkinter.Widget, master : player.Player | editor.Editor, cover_size: int):
 		self.cover_size = cover_size
 		self.root = root
 		self.master = master
