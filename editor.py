@@ -1,3 +1,4 @@
+from cProfile import label
 import tkinter
 from tkinter import N, W, S, E, ttk, simpledialog
 from typing import Callable
@@ -27,13 +28,22 @@ class Editor:
 		self.uri_frame = AddCurrentPlaybackFrame(self.left_frame, self)
 		self.uri_frame.grid(column=0, row=3, sticky=(W, E))
 
+		self.export_frame = ttk.Labelframe(self.left_frame, text='Export', padding='5 5 5 5')
+		self.export_frame.grid(column=0, row=4, sticky=(W, E))
+		self.export_name = tkinter.StringVar()
+		self.export_name_entry = ttk.Entry(self.export_frame, textvariable=self.export_name)
+		self.export_name_entry.grid(column=0, row=0, sticky=(S, N, W, E))
+		self.export_button = ttk.Button(self.export_frame, text='Export current playlist', command=self.export_current_playlist)
+		self.export_button.grid(column=0, row=1, sticky=(S, N, W, E))
+		self.export_frame.columnconfigure(0, weight=1)
+
 		self.settings_frame = ttk.Labelframe(self.left_frame, text='Settings', padding='5 5 5 5')
-		self.settings_frame.grid(column=0, row=4, sticky=(S, W, E))
+		self.settings_frame.grid(column=0, row=5, sticky=(S, W, E))
 		self.categorization_edit = tkinter.BooleanVar(value=True)
-		ttk.Checkbutton(self.settings_frame, text='Edit categorization state', variable=self.categorization_edit).grid(column=0, columnspan=6, row=1, sticky=(S, N, W, E))
+		ttk.Checkbutton(self.settings_frame, text='Edit categorization state', variable=self.categorization_edit).grid(column=0, row=0, sticky=(S, N, W, E))
 		self.categorization_view = tkinter.BooleanVar(value=True)
 		self.categorization_view.trace_add('write', self.changed_categorization_view)
-		ttk.Checkbutton(self.settings_frame, text='Show uncategorized items', variable=self.categorization_view).grid(column=0, columnspan=6, row=2, sticky=(S, N, W, E))
+		ttk.Checkbutton(self.settings_frame, text='Show uncategorized items', variable=self.categorization_view).grid(column=0, row=1, sticky=(S, N, W, E))
 
 		self.album_list = ResourceList(root, self, 'Contents', 20, self.open_item,
 			[
@@ -71,6 +81,7 @@ class Editor:
 		self.left_frame.rowconfigure(2, weight=3)
 		self.left_frame.rowconfigure(3, weight=3)
 		self.left_frame.rowconfigure(4, weight=2)
+		self.left_frame.rowconfigure(5, weight=2)
 
 		self.current_playback_frame = currentPlaybackFrame.CurrentPlaybackFrame(root, self, 160)
 		self.show_playback(True)
@@ -126,6 +137,7 @@ class Editor:
 			'categorization_edit' : self.categorization_edit.get(),
 			'current' : self.current_playlist_frame.save_dict(),
 			'target' : self.get_target_name(),
+			'export_name' : self.export_name.get(),
 			'album_list' : self.album_list.save_dict(),
 			'saved_album_list' : self.saved_album_list.save_dict(),
 			'saved_playlists_list' : self.saved_playlists_list.save_dict(),
@@ -139,6 +151,7 @@ class Editor:
 		self.categorization_edit.set(dct['categorization_edit'])
 		self.current_playlist_frame.load_from(dct['current'])
 		self.set_target_name(dct['target'])
+		self.export_name.set(dct['export_name'])
 		self.album_list.load_from(dct['album_list'])
 		self.saved_album_list.load_from(dct['saved_album_list'])
 		self.saved_playlists_list.load_from(dct['saved_playlists_list'])
@@ -286,3 +299,6 @@ class Editor:
 
 	def toggle_saved_contents(self) -> None:
 		self.current_contents_resource().toggle_saved()
+
+	def export_current_playlist(self) -> None:
+		spotify_wrapper.export_playlist(ArkhesPlaylists.get_playlist(self.get_current_name()), self.export_name.get())

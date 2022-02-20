@@ -8,7 +8,7 @@ Dependencies:
 
 - tkinter
 - spotipy
-- pillow (pil.imagetk might need to be install seperately)
+- pillow (pil.imagetk might need to be install separately)
 - (googleapi)
 
 ## Planned:
@@ -20,12 +20,10 @@ Dependencies:
 - [ ] Album/playlist covers
 - [ ] Synching with normal spotify playlist
 - [ ] Back up/sync playlists (google drive)
-- [ ] Artists are just lists of albums too
 - [ ] Option to remove duplicates from playback
 - [ ] Handle cyclical inclusions
-- [ ] Copy playlists
 - [ ] More functionality for content view/album list (add all, filter out same names, sort, search)
-- [ ] See current playback in edit section
 - [ ] Show more information (release date, genres, etc)
 - [ ] Filter by rating
 - [ ] Refactoring
+- [ ] List of all albums/songs etc that are in a (potentially nested) Arkhes playlist

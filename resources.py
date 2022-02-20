@@ -56,7 +56,7 @@ class ArkhesResource:
 	def contents(self) -> List[ArkhesResource]:
 		return []
 
-	def track_uris(self) -> List[str]:
+	def track_uris(self) -> List[List[str]]:
 		return [[item.uri() for item in self.contents()]]
 
 	def release_date(self) -> str:
@@ -152,7 +152,7 @@ class Artist(ArkhesResource):
 	def contents(self) -> List[ArkhesResource]:
 		return [Album(item) for item in self._data_dict['albums']]
 
-	def track_uris(self) -> List[str]:
+	def track_uris(self) -> List[List[str]]:
 		return ArkhesResource.flatten([resource.track_uris() for resource in self.contents()])
 
 	def description(self) -> str:
@@ -208,7 +208,7 @@ class ArkhesPlaylist(ArkhesResource):
 	def contents(self) -> List[ArkhesResource]:
 		return arkhesPlaylists.ArkhesPlaylists.get_playlist_items(self._data_dict['name'])
 
-	def track_uris(self) -> List[str]:
+	def track_uris(self) -> List[List[str]]:
 		return ArkhesResource.flatten([resource.track_uris() for resource in self.contents()])
 
 class Playback(Song):
