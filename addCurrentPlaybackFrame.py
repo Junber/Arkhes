@@ -1,10 +1,12 @@
+from __future__ import annotations
 from tkinter import N, W, S, E, ttk
 
 from spotifyWrapper import spotify_wrapper
+import editor
 
 class AddCurrentPlaybackFrame:
-	def __init__(self, root, editor):
-		self.editor = editor
+	def __init__(self, root: ttk.Widget, owner: editor.Editor) -> None:
+		self.editor = owner
 
 		self.frame = ttk.Labelframe(root, text='Current Playback', padding='5 5 5 5')
 		self.frame.columnconfigure(0, weight=1)
@@ -28,31 +30,31 @@ class AddCurrentPlaybackFrame:
 		ttk.Button(self.open_frame, text='Artist', command=self.open_artist).grid(column=0, row=2, sticky=(S, N, W, E))
 		ttk.Button(self.open_frame, text='Context', command=self.open_context).grid(column=0, row=3, sticky=(S, N, W, E))
 
-	def grid(self, **args):
+	def grid(self, **args) -> None:
 		self.frame.grid(args)
 
 
-	def add_song(self):
+	def add_song(self) -> None:
 		self.editor.add_item(spotify_wrapper.get_current_playback().song())
 
-	def add_album(self):
+	def add_album(self) -> None:
 		self.editor.add_item(spotify_wrapper.get_current_playback().album())
 
-	def add_artist(self):
-		self.editor.add_item(spotify_wrapper.get_current_playback().artist())
+	def add_artist(self) -> None:
+		self.editor.add_item(spotify_wrapper.get_current_playback().artists()[0])
 
-	def add_context(self):
+	def add_context(self) -> None:
 		self.editor.add_item(spotify_wrapper.get_current_playback().context())
 
 
-	def open_song(self):
+	def open_song(self) -> None:
 		self.editor.open_item(spotify_wrapper.get_current_playback().song())
 
-	def open_album(self):
+	def open_album(self) -> None:
 		self.editor.open_item(spotify_wrapper.get_current_playback().album())
 
-	def open_artist(self):
-		self.editor.open_item(spotify_wrapper.get_current_playback().artist())
+	def open_artist(self) -> None:
+		self.editor.open_item(spotify_wrapper.get_current_playback().artists()[0])
 
-	def open_context(self):
+	def open_context(self) -> None:
 		self.editor.open_item(spotify_wrapper.get_current_playback().context())

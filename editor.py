@@ -24,9 +24,9 @@ class Editor:
 		self.target_playlist_frame = TargetPlaylistFrame(self.left_frame, self)
 		self.target_playlist_frame.grid(column=0, row=1, sticky=(W, E))
 		self.uri_frame = UriFrame(self.left_frame, self)
-		self.uri_frame.grid(column=0, row=2, sticky=(W, E))
-		self.uri_frame = AddCurrentPlaybackFrame(self.left_frame, self)
-		self.uri_frame.grid(column=0, row=3, sticky=(W, E))
+		self.show_uri(True)
+		self.add_current_playback_frame = AddCurrentPlaybackFrame(self.left_frame, self)
+		self.add_current_playback_frame.grid(column=0, row=3, sticky=(W, E))
 
 		self.export_frame = exportFrame.ExportFrame(self.left_frame, self)
 		self.export_frame.grid(column=0, row=4, sticky=(W, E))
@@ -278,6 +278,12 @@ class Editor:
 			self.current_playback_frame.grid(column=0, row=5, columnspan=5, sticky=(N, S, W, E))
 		else:
 			self.current_playback_frame.grid_forget()
+
+	def show_uri(self, value: bool) -> None:
+		if value:
+			self.uri_frame.grid(column=0, row=2, sticky=(W, E))
+		else:
+			self.uri_frame.grid_forget()
 
 	def update_playback_position(self, _: str) -> None:
 		pass

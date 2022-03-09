@@ -28,7 +28,8 @@ class ResourceList:
 
 		self.default_sort_name = 'Default'
 		self.ascending_sort_name = 'Asc'
-		self.sorts = {'Release Date': ArkhesResource.release_date,
+		self.sorts = {
+			'Release Date': ArkhesResource.release_date,
 			'Name' : ArkhesResource.name,
 			'Popularity' : ArkhesResource.popularity,
 			'Rating' : ArkhesResource.rating}
@@ -146,12 +147,6 @@ class ResourceList:
 			button.state(['disabled'])
 
 	def add_button_row(self, resource: ArkhesResource, album_num: int, y: int) -> None:
-		button = ttk.Button(self.albums_frame, text=self.clamp_name(resource.name()),
-			style=resource.type()+'.TButton', width=self.name_length + 2)
-		button.configure(command = partial(self.album_clicked_callback, resource))
-		button.grid(column = 0, row = y, sticky = (W, E))
-		button.grid_configure(padx=1, pady=1)
-
 		self.add_button(resource, 0, y, self.clamp_name(resource.name()), self.name_length + 2,
 			partial(self.album_clicked_callback, resource),
 			resource.description(),

@@ -1,10 +1,13 @@
+from __future__ import annotations
 from tkinter import N, W, S, E, ttk, messagebox
+import tkinter
 
 from playlistNameEntry import PlaylistNameEntry
 from spotifyWrapper import spotify_wrapper
+import editor
 
 class UriFrame:
-	def __init__(self, root, owner):
+	def __init__(self, root: tkinter.Widget, owner: editor.Editor) -> None:
 		self.owner = owner
 
 		self.frame = ttk.Labelframe(root, text='URI', padding='5 5 5 5')
@@ -14,10 +17,13 @@ class UriFrame:
 		self.uri_name_entry.bind_return(self.add_uri)
 		ttk.Button(self.frame, text='Add', command=self.add_uri).grid(column=0, row=1, sticky=(S, N, W, E))
 
-	def grid(self, **args):
+	def grid(self, **args) -> None:
 		self.frame.grid(args)
 
-	def add_uri(self):
+	def grid_forget(self) -> None:
+		self.frame.grid_forget()
+
+	def add_uri(self) -> None:
 		resource = spotify_wrapper.get_resource(self.uri_name_entry.get())
 		if len(resource) == 0:
 			messagebox.showinfo(message='Invalid URI')

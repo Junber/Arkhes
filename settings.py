@@ -9,7 +9,7 @@ class Settings:
 	def __init__(self, root: ttk.Widget, editor: Editor) -> None:
 		self.editor = editor
 		self.build_update_frame(root)
-		self.build_misc_frame(root)
+		self.build_editor_frame(root)
 
 	def build_update_frame(self, root: ttk.Widget) -> None:
 		self.update_frame = ttk.Labelframe(root, text='Update', padding='5 5 5 5')
@@ -25,20 +25,28 @@ class Settings:
 		ttk.Button(saved_frame, text='Songs', command=self.update_saved_songs, width=0).grid(column=3, row=0, sticky=(S, N, W, E))
 		ttk.Button(saved_frame, text='Artists', command=self.update_saved_artists, width=0).grid(column=4, row=0, sticky=(S, N, W, E))
 
-	def build_misc_frame(self, root: ttk.Widget) -> None:
-		self.misc_frame = ttk.Labelframe(root, text='Misc', padding='5 5 5 5')
-		self.misc_frame.grid(column=0, row=1, sticky=(N, S, W, E))
+	def build_editor_frame(self, root: ttk.Widget) -> None:
+		self.editor_frame = ttk.Labelframe(root, text='Editor', padding='5 5 5 5')
+		self.editor_frame.grid(column=0, row=1, sticky=(N, S, W, E))
 
 		self.show_playback_in_editor = tkinter.BooleanVar(value=True)
 		self.show_playback_in_editor.trace_add('write', lambda *_:self.editor.show_playback(self.show_playback_in_editor.get()))
-		ttk.Checkbutton(self.misc_frame, text='Show Current Playback in Editor', width=0, variable=self.show_playback_in_editor).grid(column=0, row=0, sticky=(S, N, W, E))
+		ttk.Checkbutton(self.editor_frame, text='Show Current Playback', width=0, variable=self.show_playback_in_editor).grid(column=0, row=0, sticky=(S, N, W, E))
+
+		self.show_uri_in_editor = tkinter.BooleanVar(value=True)
+		self.show_uri_in_editor.trace_add('write', lambda *_:self.editor.show_uri(self.show_uri_in_editor.get()))
+		ttk.Checkbutton(self.editor_frame, text='Show Add URI', width=0, variable=self.show_uri_in_editor).grid(column=1, row=0, sticky=(S, N, W, E))
 
 
 	def save_dict(self) -> dict:
-		return {'show_playback_in_editor' : self.show_playback_in_editor.get()}
+		return {
+			'show_playback_in_editor' : self.show_playback_in_editor.get(),
+			'show_uri_in_editor' : self.show_uri_in_editor.get()
+			}
 
 	def load_from(self, dct: dict) -> None:
 		self.show_playback_in_editor.set(dct['show_playback_in_editor'])
+		self.show_uri_in_editor.set(dct['show_uri_in_editor'])
 
 	def update_saved_albums(self) -> None:
 		spotify_wrapper.reload_saved_albums_cache()

@@ -5,7 +5,7 @@ from tkinter import ttk
 
 class CreateToolTip():
 	def __init__(self, widget: tkinter.Widget, text: str) -> None:
-		self.wait_time = 500     #milliseconds
+		self.wait_time = 200     #milliseconds
 		self.wrap_length = 360   #pixels
 		self.widget = widget
 		self.text = text

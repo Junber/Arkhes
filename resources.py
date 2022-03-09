@@ -65,8 +65,14 @@ class ArkhesResource:
 	def popularity(self) -> int:
 		return self._data_dict['popularity']
 
+	def duration_ms(self) -> int:
+		return sum([item.duration_ms() for item in self.contents()])
+
+	def duration(self) -> datetime.timedelta:
+		return datetime.timedelta(seconds=int(self.duration_ms()/1000))
+
 	def description(self) -> str:
-		return '[No Description]'
+		return f'[{self.type_name().capitalize()}]\n{self.name()}'
 
 	def type_name(self) -> str:
 		return '[None]'
@@ -113,11 +119,14 @@ class Album(ArkhesResource):
 	def cover_url(self) -> str:
 		return self._data_dict['images'][0]['url']
 
-	def artist(self) -> Artist:
-		return Artist(self._data_dict['artists'][0])  #TODO: Handle multiple artists
+	def artists(self) -> list[Artist]:
+		return [Artist(artist) for artist in self._data_dict['artists']]
+
+	def artists_string(self) -> str:
+		return ", ".join([artist.name() for artist in self.artists()])
 
 	def description(self) -> str:
-		return f'[Album]\n{self.name()}\nArtist: {self.artist().name()}\nRelease Date: {self.release_date()}'
+		return super().description() + f'\nArtist: {self.artists_string()}\nLength: {str(self.duration())}\nRelease Date: {self.release_date()}'
 
 	def type_name(self) -> str:
 		return 'album'
@@ -155,9 +164,6 @@ class Artist(ArkhesResource):
 	def track_uris(self) -> List[List[str]]:
 		return ArkhesResource.flatten([resource.track_uris() for resource in self.contents()])
 
-	def description(self) -> str:
-		return f'[Artist]\n{self.name()}\nRelease Date: {self.release_date()}'
-
 	def type_name(self) -> str:
 		return 'artist'
 
@@ -174,17 +180,17 @@ class Song(ArkhesResource):
 	def contents(self) -> List[ArkhesResource]:
 		return [self]
 
-	def duration_ms(self) -> int:
-		return self._data_dict['duration_ms']
-
-	def duration(self) -> datetime.timedelta:
-		return datetime.timedelta(seconds=int(self.duration_ms()/1000))
-
 	def album(self) -> Album:
 		return Album(self._data_dict['album'])
 
-	def artist(self) -> Artist:
-		return Artist(self._data_dict['artists'][0])  #TODO: Handle multiple artists
+	def duration_ms(self) -> int:
+		return self._data_dict['duration_ms']
+
+	def artists(self) -> List[Artist]:
+		return [Artist(artist) for artist in self._data_dict['artists']]
+
+	def artists_string(self) -> str:
+		return ", ".join([artist.name() for artist in self.artists()])
 
 	def song(self) -> Song:
 		return self
@@ -207,6 +213,9 @@ class Song(ArkhesResource):
 class ArkhesPlaylist(ArkhesResource):
 	def contents(self) -> List[ArkhesResource]:
 		return arkhesPlaylists.ArkhesPlaylists.get_playlist_items(self._data_dict['name'])
+
+	def type_name(self) -> str:
+		return 'arkhes playlist'
 
 	def track_uris(self) -> List[List[str]]:
 		return ArkhesResource.flatten([resource.track_uris() for resource in self.contents()])
